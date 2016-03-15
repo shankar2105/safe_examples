@@ -1,7 +1,9 @@
 'use strict';
 
 var gulp = require('gulp');
+var fs = require('fs');
 var utils = require('./utils');
+var gutil = require('gulp-util');
 var childProcess = require('child_process');
 var pathUtil = require('path');
 var electronVersion = require(pathUtil.resolve('./node_modules/electron-prebuilt/package.json')).version;
@@ -31,7 +33,7 @@ var packageForOs = {
 
 var packageApp = function() {
   var config = packageForOs[utils.os()];
-  childProcess.spawn(packagerPath, [
+  var child = childProcess.spawn(packagerPath, [
     'build',
     'maidsafe_demo_app',
     '--icon=' + config.icon,
@@ -45,6 +47,37 @@ var packageApp = function() {
     '--overwrite'
   ], {
     stdio: 'inherit'
+  });
+  child.on('exit', (code) => {
+    cleanPackage();
+  });
+};
+
+var cleanPackage = function() {
+  var packagePath = './app_dist/';
+  var versionFileName = 'version';
+  var filesToRemove = [ 'LICENSE', 'LICENSES.chromium.html' ];
+
+  var packageFolder = fs.readdirSync(pathUtil.resolve(packagePath));
+  var targetPath = packagePath + packageFolder[0] + '/';
+  var targetFolders = fs.readdirSync(pathUtil.resolve(targetPath));
+  gutil.log('Cleaning package');
+  filesToRemove.forEach(function(fileName) {
+    if (targetFolders.indexOf(fileName) !== -1) {
+      fs.unlinkSync(targetPath + fileName);
+    }
+  });
+  var appVersion = require(pathUtil.resolve('./app/package.json')).version;
+  var versionFilePath = targetPath + versionFileName;
+  fs.stat(versionFilePath, function(err) {
+    if (err) {
+      return;
+    }
+    fs.writeFile(versionFilePath, appVersion, function(err) {
+      if (err) {
+        return gutil.log(err);
+      }
+    });
   });
 };
 
