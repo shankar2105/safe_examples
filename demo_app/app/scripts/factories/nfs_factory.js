@@ -4,6 +4,7 @@
 window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   'use strict';
   var self = this;
+  var mime = require('mime');
   var ROOT_PATH = {
     APP: 'app',
     DRIVE: 'drive'
@@ -12,6 +13,7 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   // create new directory
   self.createDir = function(dirPath, isPrivate, userMetadata, isPathShared, callback) {
     var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    dirPath = dirPath[0] === '/' ? dirPath.slice(1) : dirPath;
     var payload = {
       url: this.SERVER + 'nfs/directory/' + rootPath + '/' + dirPath,
       method: 'POST',
@@ -82,18 +84,23 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   };
 
   // TODO: need to change to API v0.5
-  self.modifyFileContent = function(filePath, isPathShared, dataAsUint, offset, callback) {
+  self.modifyFileContent = function(filePath, isPathShared, localPath, offset, callback) {
     offset = offset || 0;
     var url = this.SERVER + 'nfs/file/' + encodeURIComponent(filePath) + '/' + isPathShared + '?offset=' + offset;
-    var payload = {
-      url: url,
-      method: 'PUT',
+    var self = this;
+    var fileStream = require('fs').createReadStream(localPath).on('data', function(chunk) {
+      callback(null, chunk.length);
+    });
+    fileStream.pipe(require('request').put(url, {
       headers: {
-        authorization: 'Bearer ' + this.getAuthToken()
+        'Content-Type': mime.lookup(filePath)
       },
-      data: dataAsUint
-    };
-    (new this.Request(payload, callback)).send();
+      auth: {
+        'bearer': self.getAuthToken()
+      }
+    }, function(err) {
+      callback(err);
+    }));
   };
 
   self.getFile = function(filePath, isPathShared, offset, length, callback) {
