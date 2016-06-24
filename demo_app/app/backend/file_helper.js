@@ -54,7 +54,7 @@ export default class FileHelper {
     if (self.size > 0) {
       self.uploader.progressListener.onSuccess(Math.floor(self.size/4), this.networkParentDirPath + this.fileName);
     }
-    self.uploader.api.createFile(this.networkParentDirPath + this.fileName, '', false, self.localPath, function(err) {
+    self.uploader.api.createFile(this.networkParentDirPath + this.fileName, '', false, function(err) {
       if (err) {
         console.error(err);
         return self.uploader.onError('Failed to create file ' + self.networkParentDirPath + self.fileName);

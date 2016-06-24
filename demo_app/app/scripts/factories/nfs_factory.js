@@ -4,21 +4,23 @@
 window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   'use strict';
   var self = this;
+  var ROOT_PATH = {
+    APP: 'app',
+    DRIVE: 'drive'
+  };
 
   // create new directory
-  self.createDir = function(dirPath, isPrivate, userMetadata, isVersioned, isPathShared, callback) {
+  self.createDir = function(dirPath, isPrivate, userMetadata, isPathShared, callback) {
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
     var payload = {
-      url: this.SERVER + 'nfs/directory',
+      url: this.SERVER + 'nfs/directory/' + rootPath + '/' + dirPath,
       method: 'POST',
       headers: {
         authorization: 'Bearer ' + this.getAuthToken()
       },
       data: {
-        dirPath: dirPath,
         isPrivate: isPrivate,
-        userMetadata: userMetadata,
-        isVersioned: isVersioned,
-        isPathShared: isPathShared
+        userMetadata: userMetadata
       }
     };
     (new this.Request(payload, callback)).send();
@@ -26,11 +28,8 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
 
   // get specific directory
   self.getDir = function(callback, dirPath, isPathShared) {
-    dirPath = encodeURIComponent(dirPath);
-    var URL = this.SERVER + 'nfs/directory/' + dirPath;
-    if (typeof isPathShared === 'boolean') {
-      URL += '/' + isPathShared;
-    }
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    var URL = this.SERVER + 'nfs/directory/' + rootPath + '/' + dirPath;
     var payload = {
       url: URL,
       method: 'GET',
@@ -42,7 +41,8 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   };
 
   self.deleteDirectory = function(dirPath, isPathShared, callback) {
-    var url = this.SERVER + 'nfs/directory/' + encodeURIComponent(dirPath) + '/' + (isPathShared || false);
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    var url = this.SERVER + 'nfs/directory/' + rootPath + '/' + dirPath;
     var payload = {
       url: url,
       method: 'DELETE',
@@ -54,8 +54,9 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   };
 
   self.deleteFile = function(filePath, isPathShared, callback) {
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
     var payload = {
-      url: this.SERVER + 'nfs/file/' + encodeURIComponent(filePath) + '/' + (isPathShared || false),
+      url: this.SERVER + 'nfs/file/' + rootPath + '/' + filePath,
       method: 'DELETE',
       headers: {
         authorization: 'Bearer ' + this.getAuthToken()
@@ -64,8 +65,9 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
     (new this.Request(payload, callback)).send();
   };
 
-  self.createFile = function(filePath, metadata, isPathShared, localPath, callback) {
-    var url = this.SERVER + 'nfs/file';
+  self.createFile = function(filePath, metadata, isPathShared, callback) {
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    var url = this.SERVER + 'nfs/file/' + rootPath + '/' + filePath;
     var payload = {
       url: url,
       method: 'POST',
@@ -73,15 +75,13 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
         authorization: 'Bearer ' + this.getAuthToken()
       },
       data: {
-        filePath: filePath,
-        metadata: metadata,
-        isPathShared: isPathShared,
-        localFilePath: localPath
+        metadata: metadata
       }
     };
     (new this.Request(payload, callback)).send();
   };
 
+  // TODO: need to change to API v0.5
   self.modifyFileContent = function(filePath, isPathShared, dataAsUint, offset, callback) {
     offset = offset || 0;
     var url = this.SERVER + 'nfs/file/' + encodeURIComponent(filePath) + '/' + isPathShared + '?offset=' + offset;
@@ -97,21 +97,22 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
   };
 
   self.getFile = function(filePath, isPathShared, offset, length, callback) {
-    var url = this.SERVER + 'nfs/file/' + encodeURIComponent(filePath) + '/' + isPathShared + '?';
-    url += ('offset=' + offset);
-    url += ('&length=' + length);
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    var url = this.SERVER + 'nfs/file/' + rootPath + '/' + filePath;
     var payload = {
       url: url,
       method: 'GET',
       headers: {
-        authorization: 'Bearer ' + this.getAuthToken()
+        authorization: 'Bearer ' + this.getAuthToken(),
+        range: 'bytes=' + offset + '-' + (offset + length)
       }
     };
     (new this.Request(payload, callback)).send();
   };
 
   var rename = function(path, isPathShared, newName, isFile, callback) {
-    var url = this.SERVER + (isFile ? 'nfs/file/' : 'nfs/directory/') + encodeURIComponent(path) + '/' + isPathShared;
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    var url = this.SERVER + (isFile ? 'nfs/file/metadata/' : 'nfs/directory/') + rootPath + '/' + path;
     var payload = {
       url: url,
       method: 'PUT',
