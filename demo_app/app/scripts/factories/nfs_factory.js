@@ -83,17 +83,18 @@ window.maidsafeDemo.factory('nfsFactory', [ function(Shared) {
     (new this.Request(payload, callback)).send();
   };
 
-  // TODO: need to change to API v0.5
   self.modifyFileContent = function(filePath, isPathShared, localPath, offset, callback) {
     offset = offset || 0;
-    var url = this.SERVER + 'nfs/file/' + encodeURIComponent(filePath) + '/' + isPathShared + '?offset=' + offset;
     var self = this;
+    var rootPath = isPathShared ? ROOT_PATH.DRIVE : ROOT_PATH.APP;
+    var url = this.SERVER + 'nfs/file/' + rootPath + '/' + filePath;
     var fileStream = require('fs').createReadStream(localPath).on('data', function(chunk) {
       callback(null, chunk.length);
     });
     fileStream.pipe(require('request').put(url, {
       headers: {
-        'Content-Type': mime.lookup(filePath)
+        'Content-Type': mime.lookup(filePath),
+        'Range': 'Bytes=' + offset + '-'
       },
       auth: {
         'bearer': self.getAuthToken()
