@@ -57,22 +57,25 @@ export default class Initializer extends Component {
       });
   }
 
-  getStructuredDataIdHandle(name) {
+  getStructuredDataIdHandle(name, isVersioned) {
     const { token, getStructuredDataIdHandle } = this.props;
-    getStructuredDataIdHandle(token, name)
+    getStructuredDataIdHandle(token, name, isVersioned)
       .then((res) => {
         if (res.error) {
           return showDialog('Get Structure Data Handler Error', res.error.message);
         }
-        return this.getStructuredDataHandle(res.payload.data.handleId);
+        return this.getStructuredDataHandle(res.payload.data.handleId, name, isVersioned);
       });
   }
 
-  getStructuredDataHandle(handleId) {
+  getStructuredDataHandle(handleId, name, isVersioned) {
     const { token, fetchStructuredDataHandle } = this.props;
     fetchStructuredDataHandle(token, handleId)
       .then(res => {
         if (res.error) {
+          if (!isVersioned && (res.error.response.data.description.indexOf('NoSuchData') !== -1)) {
+            return this.getStructuredDataIdHandle(name, true);
+          }
           return showDialog('Get Structure Data Handler Error', res.error.message);
         }
         return this.fetchStructuredData(res.payload.data.handleId);
