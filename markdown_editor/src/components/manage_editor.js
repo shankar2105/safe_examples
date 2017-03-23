@@ -6,7 +6,7 @@ import '../../node_modules/codemirror/lib/codemirror.css';
 import '../../node_modules/react-md-editor/dist/react-md-editor.css';
 require(`../../node_modules/codemirror/theme/${EDITOR_THEME}.css`);
 
-import { saveFile, readFile, getSDVersions } from '../store';
+import { saveFile, readFile, getFileVersions } from '../store';
 
 export default class ManagedEditor extends Component {
 
@@ -78,7 +78,7 @@ Some **bold** and _italic_ text
 
   getVersions() {
     this.props.toggleSpinner(); // set spinner
-    return getSDVersions(this.props.filename)
+    return getFileVersions(this.props.filename)
       .then(res => {
         this.props.toggleSpinner(); // remove spinner
         this.setState({ versions: res })

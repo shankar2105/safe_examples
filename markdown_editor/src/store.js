@@ -68,15 +68,15 @@ const _createMdata = () => {
       let pubSignKeyHandle = null;
       let permHandle = null;
 
-      return window.safeMutableData.newPermissionSet()
+      return window.safeMutableData.newPermissionSet(ACCESS_TOKEN)
         .then((permSet) => (permSetHandle = permSet))
         .then(() => window.safeMutableDataPermissionsSet.setAllow(ACCESS_TOKEN, permSetHandle, 'Insert'))
         .then(() => window.safeMutableDataPermissionsSet.setAllow(ACCESS_TOKEN, permSetHandle, 'Update'))
         .then(() => window.safeMutableDataPermissionsSet.setAllow(ACCESS_TOKEN, permSetHandle, 'Delete'))
         .then(() => window.safeMutableDataPermissionsSet.setAllow(ACCESS_TOKEN, permSetHandle, 'ManagePermissions'))
-        .then(() => window.safeApp.getPubSignKey())
+        .then(() => window.safeApp.getPubSignKey(ACCESS_TOKEN))
         .then((signKey) => (pubSignKeyHandle = signKey))
-        .then(() => window.safeMutableData.newPermissions())
+        .then(() => window.safeMutableData.newPermissions(ACCESS_TOKEN))
         .then((perm) => (permHandle = perm))
         .then(() => window.safeMutableDataPermissions.insertPermissionsSet(ACCESS_TOKEN, permHandle, pubSignKeyHandle, permSetHandle))
         .then(() => window.safeMutableData.newEntries(ACCESS_TOKEN))
@@ -122,7 +122,7 @@ export const getFileIndex = () => {
         .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
         .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, 'FILE_INDEX'))
         .then((fileIndex) => {
-          const parsedFileIndex = JSON.parse(new Buffer(fileIndex, 'base64').toString());
+          const parsedFileIndex = JSON.parse(new Buffer(fileIndex.buf, 'base64').toString());
           FILE_INDEX = parsedFileIndex;
           return FILE_INDEX;
         }))
@@ -132,23 +132,36 @@ export const getFileIndex = () => {
       }));
 };
 
-// TODO fetch versioned data
+const _prepareFile = (oldData, newData) => {
+  if (!(oldData && Array.isArray(oldData))) {
+    throw new Error('oldData is not an Array');
+  }
+  oldData.push({
+    ts: (new Date()).getTime(),
+    content: newData
+  });
+  return new Buffer(JSON.stringify(oldData)).toString('base64');
+};
+
+const _getFile = (mdata, filename) => {
+  return window.safeMutableData.emulateAs(ACCESS_TOKEN, mdata, 'NFS')
+    .then((nfs) => window.safeNfs.fetch(ACCESS_TOKEN, nfs, filename))
+    .then((file) => window.safeImmutableData.fetch(ACCESS_TOKEN, window.safeNfs.getFileMeta(file).dataMapName))
+    .then((immut) => window.safeImmutableData.read(ACCESS_TOKEN, immut))
+    .then((data) => JSON.parse(new Buffer(data, 'base64').toString()));
+};
+
 export const readFile = (filename, version) => {
   return window.safeApp.getContainer(ACCESS_TOKEN, '_public')
     .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
     .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, INDEX_FILE_NAME)
       .then((value) => window.safeMutableData.newPrivate(ACCESS_TOKEN, value.buf, TYPE_TAG)
-        .then((mdata) => window.safeMutableData.emulateAs('NFS'))
-        .then((nfs) => {
-          return window.safeNfs.fetch(ACCESS_TOKEN, nfs, filename)
-            .then((file) => window.safeImmutableData.fetch(ACCESS_TOKEN, window.safeNfs.getFileMeta(file).dataMapName))
-            .then((immut) => window.safeImmutableData.read(ACCESS_TOKEN, immut))
-            .then((data) => new Buffer(data, 'base64').toString())
-        })));
+        .then((mdata) => _getFile(mdata, filename))
+        .then((file) => version ? file[version] : file)));
 };
 
-export const getSDVersions = (filename) => {
-  return Promise.resolve([]);
+export const getFileVersions = (filename) => {
+  return readFile(filename);
 };
 
 const _updateFile = (filename, payload) => {
@@ -159,31 +172,33 @@ const _updateFile = (filename, payload) => {
         .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata)
           .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, INDEX_FILE_NAME))
           .then((value) => {
-            const nfs = window.safeMutableData.emulateAs('NFS');
-            return window.safeNfs.create(ACCESS_TOKEN, nfs, payload)
-              .then((file) => window.safeNfs.update(ACCESS_TOKEN, nfs, file, filename, parseInt(value.version, 10) + 1))
+            return _getFile(mdata, filename)
+              .then((files) => window.safeMutableData.emulateAs(ACCESS_TOKEN, mdata, 'NFS')
+                .then((nfs) => window.safeNfs.create(ACCESS_TOKEN, nfs, _prepareFile(files, payload))
+                  .then((file) => window.safeNfs.update(ACCESS_TOKEN, nfs, file, filename, parseInt(value.version, 10) + 1))));
           }))));
 };
 
-export const saveFile = (filename, data) => {
-  const payload = new Buffer(JSON.stringify({
-    ts: (new Date()).getTime(),
-    content: data
-  })).toString('base64');
-
+export const saveFile = (filename, data) =>   {
   if (FILE_INDEX[filename]) {
     // this was an edit, add new version
     console.log("existing");
-    return _updateFile(filename, payload);
+    return _updateFile(filename, data);
   } else {
     return window.safeApp.getContainer(ACCESS_TOKEN, '_public')
       .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
       .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, INDEX_FILE_NAME)
         .then((value) => window.safeMutableData.newPrivate(ACCESS_TOKEN, value.buf, TYPE_TAG)
-          .then((mdata) => window.safeMutableData.emulateAs('NFS'))
-          .then((nfs) => {
-            return window.safeNfs.create(ACCESS_TOKEN, nfs, payload)
-              .then((file) => window.safeNfs.insert(ACCESS_TOKEN, nfs, file, filename))
-          })));
+          .then((mdata) => window.safeMutableData.emulateAs(ACCESS_TOKEN, mdata, 'NFS')
+            .then((nfs) => {
+              return window.safeNfs.create(ACCESS_TOKEN, nfs, _prepareFile([], data))
+                .then((file) => window.safeNfs.insert(ACCESS_TOKEN, nfs, file, filename))
+            })
+            .then(() => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata)
+              .then((entries) => window.safeMutableDataEntries.mutate(ACCESS_TOKEN, entries)
+                .then((mut) => {
+                  FILE_INDEX[filename] = true;
+                  return window.safeMutableDataMutation.update(ACCESS_TOKEN, mut, 'FILE_INDEX', _getBufferedFileIndex(), (parseInt(value.version, 10) + 1))
+                }))))));
   }
 };
