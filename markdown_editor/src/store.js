@@ -62,7 +62,7 @@ const _fetchAccessInfo = () => {
 
 const _createMdata = () => {
   FILE_INDEX = {};
-  return window.safeMutableData.newRandomPublic(ACCESS_TOKEN, TYPE_TAG)
+  return window.safeMutableData.newRandomPrivate(ACCESS_TOKEN, TYPE_TAG)
     .then((mdata) => {
       let permSetHandle = null;
       let pubSignKeyHandle = null;
@@ -118,7 +118,7 @@ export const getFileIndex = () => {
   return window.safeApp.getContainer(ACCESS_TOKEN, '_public')
     .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
     .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, INDEX_FILE_NAME))
-    .then((value) => window.safeMutableData.newPublic(ACCESS_TOKEN, value.buf, TYPE_TAG)
+    .then((value) => window.safeMutableData.newPrivate(ACCESS_TOKEN, value.buf, TYPE_TAG)
       .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
       .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, 'FILE_INDEX'))
       .then((fileIndex) => {
@@ -162,7 +162,7 @@ export const readFile = (filename, version) => {
   return window.safeApp.getContainer(ACCESS_TOKEN, '_public')
     .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
     .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, INDEX_FILE_NAME)
-      .then((value) => window.safeMutableData.newPublic(ACCESS_TOKEN, value.buf, TYPE_TAG)
+      .then((value) => window.safeMutableData.newPrivate(ACCESS_TOKEN, value.buf, TYPE_TAG)
         .then((mdata) => _getFile(mdata, filename))
         .then((file) => {
           return version ? file.data[version] : file.data
@@ -177,7 +177,7 @@ const _updateFile = (filename, payload) => {
   return window.safeApp.getContainer(ACCESS_TOKEN, '_public')
     .then((mdata) => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata))
     .then((entries) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entries, INDEX_FILE_NAME))
-    .then((value) => window.safeMutableData.newPublic(ACCESS_TOKEN, value.buf, TYPE_TAG))
+    .then((value) => window.safeMutableData.newPrivate(ACCESS_TOKEN, value.buf, TYPE_TAG))
     .then((mdata) => {
       return _getFile(mdata, filename)
         .then((files) => window.safeMutableData.emulateAs(ACCESS_TOKEN, mdata, 'NFS')
@@ -195,7 +195,7 @@ export const saveFile = (filename, data) => {
     return window.safeApp.getContainer(ACCESS_TOKEN, '_public')
       .then((publicMdHandle) => window.safeMutableData.getEntries(ACCESS_TOKEN, publicMdHandle))
       .then((entHandle) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entHandle, INDEX_FILE_NAME))
-      .then((value) => window.safeMutableData.newPublic(ACCESS_TOKEN, value.buf, TYPE_TAG)
+      .then((value) => window.safeMutableData.newPrivate(ACCESS_TOKEN, value.buf, TYPE_TAG)
         .then((mdata) => window.safeMutableData.emulateAs(ACCESS_TOKEN, mdata, 'NFS')
           .then((nfs) => {
             return window.safeNfs.create(ACCESS_TOKEN, nfs, _prepareFile([], data))
