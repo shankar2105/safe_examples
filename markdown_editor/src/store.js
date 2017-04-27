@@ -212,24 +212,17 @@ export const saveFile = (filename, data) => {
       .then((entHandle) => window.safeMutableDataEntries.get(ACCESS_TOKEN, entHandle, INDEX_FILE_NAME))
       .then((value) => window.safeMutableData.fromSerial(ACCESS_TOKEN, value.buf)
         .then((mdata) => window.safeMutableData.emulateAs(ACCESS_TOKEN, mdata, 'NFS')
-          .then((nfs) => {
-            return window.safeNfs.create(ACCESS_TOKEN, nfs, _prepareFile([], data))
-              .then((file) => window.safeNfs.insert(ACCESS_TOKEN, nfs, file, filename));
-          })
+          .then((nfs) => window.safeNfs.create(ACCESS_TOKEN, nfs, _prepareFile([], data))
+            .then((file) => window.safeNfs.insert(ACCESS_TOKEN, nfs, file, filename)))
           .then(() => window.safeMutableData.getEntries(ACCESS_TOKEN, mdata)
-            .then((entriesHandle) => {
-              return window.safeMutableData.encryptKey(ACCESS_TOKEN, mdata, 'FILE_INDEX').then((key) => {
-                return window.safeMutableData.get(ACCESS_TOKEN, mdata, key);
-              })
-                .then((val) => {
-                  return window.safeMutableDataEntries.mutate(ACCESS_TOKEN, entriesHandle)
-                    .then((mut) => {
-                      FILE_INDEX[filename] = 1;
-                      return window.safeMutableDataMutation.update(ACCESS_TOKEN, mut, 'FILE_INDEX', _getBufferedFileIndex(), (parseInt(val.version, 10) + 1))
-                        .then(() => window.safeMutableData.applyEntriesMutation(ACCESS_TOKEN, mdata, mut));
-                    })
-                })
-            }))));
+            .then((entriesHandle) => window.safeMutableData.encryptKey(ACCESS_TOKEN, mdata, 'FILE_INDEX')
+              .then((key) => window.safeMutableData.get(ACCESS_TOKEN, mdata, key))
+              .then((val) => window.safeMutableDataEntries.mutate(ACCESS_TOKEN, entriesHandle)
+                .then((mut) => {
+                  FILE_INDEX[filename] = 1;
+                  return window.safeMutableDataMutation.update(ACCESS_TOKEN, mut, 'FILE_INDEX', _getBufferedFileIndex(), (parseInt(val.version, 10) + 1))
+                    .then(() => window.safeMutableData.applyEntriesMutation(ACCESS_TOKEN, mdata, mut));
+                }))))));
   }
 };
 
