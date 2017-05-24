@@ -13,6 +13,7 @@ import containers from './containers';
 import file from './file';
 
 const rootReducer = combineReducers({
+  routing,
   accessInfo,
   auth,
   connection,
@@ -20,7 +21,6 @@ const rootReducer = combineReducers({
   file,
   i18n: i18nReducer,
   publicId,
-  routing,
   service
 });
 
