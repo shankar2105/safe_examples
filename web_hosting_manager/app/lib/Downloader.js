@@ -2,7 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { getPath } from './temp';
 import { shell } from 'electron';
-import { safe, TAG_TYPE_WWW, accessContainers } from './api';
+import safeApi from './api';
+import CONSTANTS from './constants';
+
+const app = safeApi.app;
 
 export default class Downloader {
   constructor(networkPath, callback) {
@@ -19,14 +22,14 @@ export default class Downloader {
     const tokens = this.path.split('/');
     const filePath = path.join(getPath(), tokens.pop());
 
-    return safe.auth.getContainer(accessContainers.public)
+    return app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC)
       .then((mdata) => mdata.encryptKey(containerPath.dir).then((encKey) => mdata.get(encKey)).then((value) => mdata.decrypt(value.buf)))
-      .then((val) => safe.mutableData.newPublic(val, TAG_TYPE_WWW))
+      .then((val) => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.fetch(containerPath.file)
           .then((file) => {
-            return safe.immutableData.fetch(file.dataMapName);
+            return app.immutableData.fetch(file.dataMapName);
           })
           .then((i) => i.read());
       })

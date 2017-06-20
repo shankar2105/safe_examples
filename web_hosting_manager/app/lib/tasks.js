@@ -1,7 +1,9 @@
 import path from 'path';
 import fs from 'fs';
 import { I18n } from 'react-redux-i18n';
-import { safe, TAG_TYPE_WWW, accessContainers } from './api';
+
+import safeApi from './api';
+import CONSTANTS from './constants';
 
 const parseContainerPath = (targetPath) => {
   if (!targetPath) {
@@ -31,14 +33,15 @@ export class FileUploadTask extends Task {
   }
 
   execute(callback) {
-    if (!safe) {
+    const app = safeApi.app;
+    if (!app) {
       return callback(new Error('App not registered'));
     }
     const containerPath = parseContainerPath(this.networkPath);
 
-    return safe.auth.getContainer(accessContainers.public)
+    return app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC)
       .then((mdata) => mdata.encryptKey(containerPath.target).then((encKey) => mdata.get(encKey)).then((value) => mdata.decrypt(value.buf)))
-      .then((val) => safe.mutableData.newPublic(val, TAG_TYPE_WWW))
+      .then((val) => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.create(fs.readFileSync(this.localPath))

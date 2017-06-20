@@ -1,12 +1,14 @@
 import pkg from '../package.json';
-
-export default {
-  typeTag: 15001,
-  keyTar: {
-    service: 'WEB_HOST_MANAGER',
-    account: 'SAFE_USER'
+const CONSTANTS = {
+  TAG_TYPE: {
+    DNS: 15001,
+    WWW: 15002
   },
-  appInfo: {
+  KEY_TAR: {
+    SERVICE: 'WEB_HOST_MANAGER',
+    ACCOUNT: 'SAFE_USER'
+  },
+  APP_INFO: {
     data: {
       id: pkg.identifier,
       scope: null,
@@ -33,12 +35,17 @@ export default {
       ]
     }
   },
-  accessContainers: {
-    public: '_public',
-    publicNames: '_publicNames'
+  ACCESS_CONTAINERS: {
+    PUBLIC: '_public',
+    PUBLIC_NAMES: '_publicNames'
   },
-  authResponseType: {
-    containers: 'containers',
-    revoked: 'revoked'
-  }
+  AUTH_RES_TYPE: {
+    CONTAINERS: 'containers',
+    REVOKED: 'revoked'
+  },
+  ERROR_CODE: {
+    NO_SUCH_ENTRY: -106
+  },
+  MAX_FILE_SIZE: 20 * 1024 * 1024
 };
+export default CONSTANTS;
