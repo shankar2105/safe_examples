@@ -153,6 +153,12 @@ const publicId = (state: Object = initialState, action: Object) => {
         publicNames
       };
       break;
+    case ACTION_TYPES.CLEAR_NOTIFICATION:
+      state = {
+        ...state,
+        error: undefined
+      };
+      break;
   }
   return state;
 };

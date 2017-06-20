@@ -216,3 +216,10 @@ export const clearNotification = () => {
     type: ACTION_TYPES.CLEAR_NOTIFICATION
   }
 };
+
+export const clearAccessData = () => {
+  utils.localAuthInfo.clear();
+  return {
+    type: ACTION_TYPES.CLEAR_ACCESS_DATA
+  };
+};

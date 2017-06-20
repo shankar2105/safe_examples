@@ -47,7 +47,7 @@ export class FileUploadTask extends Task {
         return nfs.create(fs.readFileSync(this.localPath))
           .then((file) => nfs.insert(containerPath.file, file)
             .catch((err) => {
-              if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
+              if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
                 return Promise.reject(err);
               }
               return mdata.get(containerPath.file)

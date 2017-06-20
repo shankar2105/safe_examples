@@ -205,15 +205,14 @@ class SafeApi {
       return Promise.reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Container path' })));
     }
 
-    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES)
+    return this.getPublicNamesContainer()
       .then((md) => this.getMDataValueForKey(md, publicName))
       .then((decVal) => this.app.mutableData.newPublic(decVal, CONSTANTS.TAG_TYPE.DNS))
       .then((md) => this._insertToMData(md, serviceName, pathXORName)
         .catch((err) => {
-          if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
+          if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
             return Promise.reject(err);
           }
-          // FIXME shankar - Handle entry exist after delete
           return this._updateMDataKey(md, serviceName, pathXORName);
         }));
   }
@@ -298,12 +297,12 @@ class SafeApi {
 
   remapService(publicName, serviceName, path) {
     return this.getPublicContainer()
-      .the((pubMd) => this.getMDataValueForKey(pubMd, path))
+      .then((pubMd) => this.getMDataValueForKey(pubMd, path))
       .then((containerVal) => {
         return this.getPublicNamesContainer()
           .then((pnMd) => this.getMDataValueForKey(pnMd, publicName))
           .then((pnVal) => this.app.mutableData.newPublic(pnVal, CONSTANTS.TAG_TYPE.DNS))
-          .then((md) => _updateMDataKey(md, serviceName, containerVal));
+          .then((md) => this._updateMDataKey(md, serviceName, containerVal));
       });
   }
 
@@ -425,11 +424,10 @@ class SafeApi {
 
   _updateMDataKey(md, key, value) {
     return md.getEntries()
-      .then(() => md.getEntries()
         .then((entries) => entries.get(key)
           .then((val) => entries.mutate()
             .then((mut) => mut.update(key, value, val.version + 1)
-              .then(() => md.applyEntriesMutation(mut))))));
+              .then(() => md.applyEntriesMutation(mut)))));
   }
 
   _removeFromMData(md, key) {

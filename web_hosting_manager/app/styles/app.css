@@ -117,8 +117,12 @@ nav {
 
 .error-msg {
   color: #e26464;
-  line-height: 30px;
+  line-height: normal;
   min-height: 20px;
+}
+
+.error-msg.withMar {
+  margin: 5px 0;
 }
 
 .service-link {
@@ -173,6 +177,10 @@ nav {
   width: 100% !important;
 }
 
+.create-service-input .error-msg {
+  padding-top: 5px;
+}
+
 .split-cntr {
   position: relative;
 }
@@ -204,9 +212,13 @@ nav {
   font-weight: normal;
 }
 
+.split-cntr-i .error-msg {
+  margin: 5px 0;
+}
+
 .split-cntr-i .ant-select, .split-cntr-i .ant-input-wrapper {
   width: 80%;
-  margin: 0 auto 20px;
+  margin: 0 auto 30px;
   display: inline-block;
 }
 
