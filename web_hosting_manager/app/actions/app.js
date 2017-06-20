@@ -33,11 +33,6 @@ export const connect = (authRes: String) => {
     return dispatch({
       type: ACTION_TYPES.CONNECT,
       payload: api.connect(authRes)
-        .then((resType) => {
-          if (resType === CONSTANTS.AUTH_RES_TYPE.REVOKED) {
-            return dispatch(revoked());
-          }
-        })
     });
   };
 };
@@ -101,7 +96,9 @@ export const createContainerAndService = (publicId: string, service: string,
 export const createService = (publicId: string, service: string, containerPath: string) => {
   return {
     type: ACTION_TYPES.CREATE_SERVICE,
-    payload: api.createService(publicId, service, containerPath)
+    payload: api.getServiceContainerMeta(containerPath)
+      .then((meta) => api.createService(publicId, service, meta.name))
+      .then(() => api.fetchServices())
   };
 };
 
@@ -209,7 +206,7 @@ export const deleteItem = (containerPath, name) => {
     type: ACTION_TYPES.DELETE,
     payload: api.deleteFileOrDir(`${containerPath}/${name}`)
       .then(() => {
-        return api.getContainer(containerPath);
+        return api.getServiceContainer(containerPath);
       })
   };
 };

@@ -88,7 +88,7 @@ export const getDirectoryStats = (localPath) => {
       stats.files += tempStat.files;
       stats.directories += tempStat.directories;
     } else {
-      if (stat.size > MAX_FILE_SIZE) {
+      if (stat.size > CONSTANTS.MAX_FILE_SIZE) {
         throw new Error(I18n.t('messages.restrictedFileSize', { size: (CONSTANTS.MAX_FILE_SIZE / 1000000) }));
       }
       stats.files += 1;

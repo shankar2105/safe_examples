@@ -31,9 +31,6 @@ export default class Auth extends Component {
   }
 
   componentWillUpdate(nextProps) {
-    if (nextProps.isRevoked) {
-      nextProps.router.replace('/');
-    }
     if (nextProps.fetchingPublicContainers) {
       this.reloadingContainer = true;
     }
@@ -234,7 +231,6 @@ export default class Auth extends Component {
       return layout(publicId, <div className="default">No service found</div>);
     };
     const serviceListView = (publicId) => {
-      console.log('this.props.publicNames[publicId]', this.props.publicNames[publicId])
       const servicesList = Object.keys(this.props.publicNames[publicId]).map((serviceName, i) => {
         const servicePath = this.props.publicNames[publicId][serviceName];
         return (

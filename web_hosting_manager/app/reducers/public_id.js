@@ -113,11 +113,26 @@ const publicId = (state: Object = initialState, action: Object) => {
     }
       break;
 
-    case `${ACTION_TYPES.FETCH_SERVICES}_FULFILLED`:
+    case `${ACTION_TYPES.CREATE_SERVICE}_FULFILLED`:
     {
       const publicNames = {};
       let pkey = null;
       for (pkey of Object.keys(action.payload)) {
+        publicNames[pkey] = { ...action.payload[pkey] };
+      }
+      state = {
+        ...state,
+        publicNames
+      };
+    }
+      break;
+
+    case `${ACTION_TYPES.FETCH_SERVICES}_FULFILLED`:
+    {
+      const publicNames = {};
+      let pkey = null;
+
+      for (pkey in action.payload) {
         publicNames[pkey] = { ...action.payload[pkey] };
       }
       state = {

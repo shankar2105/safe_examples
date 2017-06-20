@@ -5,8 +5,6 @@ import { shell } from 'electron';
 import safeApi from './api';
 import CONSTANTS from './constants';
 
-const app = safeApi.app;
-
 export default class Downloader {
   constructor(networkPath, callback) {
     this.path = networkPath;
@@ -15,6 +13,7 @@ export default class Downloader {
   }
 
   start() {
+    const app = safeApi.app;
     const containerPath = {
       dir: this.path.split('/').slice(0, 3).join('/'),
       file: this.path.split('/').slice(3).join('/')

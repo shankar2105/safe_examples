@@ -284,7 +284,7 @@ nav {
 }
 
 .custom-card .ant-card-body .ant-input-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .explorer {

@@ -5,6 +5,8 @@ import path from 'path';
 import safeApp from 'safe-app';
 import { I18n } from 'react-redux-i18n';
 
+import Uploader from './Uploader';
+import Downloader from './Downloader';
 import * as utils from './utils';
 import CONSTANTS from './constants';
 
@@ -99,7 +101,10 @@ class SafeApi {
               console.warn('No Public Names found');
               return;
             }
+            const encPublicNames = [];
             return keys.forEach(function (key) {
+              encPublicNames.push(key);
+            }).then(() => Promise.all(encPublicNames.map((key) => {
               return md.decrypt(key)
                 .then((decKey) => {
                   const decPubId = decKey.toString();
@@ -113,9 +118,9 @@ class SafeApi {
                   }
                   return Promise.reject(err);
                 });
-            });
+            })));
           })))
-      .then(() => this.publicNames);
+      .then(() => (self.publicNames));
   }
 
   /**
@@ -137,14 +142,17 @@ class SafeApi {
             if ((service.indexOf('@email') !== -1) || (val.buf.length === 0)) {
               return;
             }
-            return self._getServicePath(val)
-              .then((path) => services[service] = path);
+            services[service] = val;
           })))
+        .then(() => Promise.all(Object.keys(services).map((service) => (
+          self._getServicePath(services[service])
+            .then((path) => {
+              services[service] = path;
+            })
+        ))))
         .then(() => (self.publicNames[publicName] = services))
         .catch(Promise.reject);
-    })).then(() => {
-      return self.publicNames;
-    });
+    })).then(() => (self.publicNames));
   }
 
   /**
@@ -174,10 +182,9 @@ class SafeApi {
           .then((perm) => this.app.mutableData.newEntries()
             .then((entries) => md.put(perm, entries)))
           .then(() => md.getNameAndTag())
-          .then((mdMeta) => this._getPublicContainer()
+          .then((mdMeta) => this._getPublicNamesContainer()
             .then((pubMd) => this._insertToMData(pubMd, name, mdMeta.name, true)));
       });
-    // TODO Handle deleted public name
   }
 
   /**
@@ -187,7 +194,7 @@ class SafeApi {
    * @param path
    * @return {*}
    */
-  createService(publicName, serviceName, path) {
+  createService(publicName, serviceName, pathXORName) {
     if (!publicName) {
       return Promise.reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Public Id' })));
     }
@@ -201,14 +208,14 @@ class SafeApi {
     return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES)
       .then((md) => this._getMDataValueForKey(md, publicName))
       .then((decVal) => this.app.mutableData.newPublic(decVal, CONSTANTS.TAG_TYPE.DNS))
-      .then((md) => this._insertToMData(md, serviceName, path))
-      .catch((err) => {
-        if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
-          return Promise.reject(err);
-        }
-        // FIXME shankar - Handle entry exist after delete
-        return Promise.resolve();
-      });
+      .then((md) => this._insertToMData(md, serviceName, pathXORName)
+        .catch((err) => {
+          if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
+            return Promise.reject(err);
+          }
+          // FIXME shankar - Handle entry exist after delete
+          return this._updateMDataKey(md, serviceName, pathXORName);
+        }));
   }
 
   /**
@@ -231,6 +238,7 @@ class SafeApi {
   }
 
   getPublicContainer() {
+    const publicKeys = [];
     return this._getPublicContainer()
       .then((pubMd) => pubMd.getKeys())
       .then((keys) => keys.len()
@@ -238,12 +246,11 @@ class SafeApi {
           if (len === 0) {
             return Promise.resolve([]);
           }
-          const publicKeys = [];
           return keys.forEach((key) => {
             if (!key) {
               return;
             }
-            publicKeys.shift(key.toString());
+            publicKeys.unshift(key.toString());
           }).then(() => publicKeys);
         }));
   }
@@ -301,11 +308,12 @@ class SafeApi {
   }
 
   getServiceContainer(path) {
-    return this.getPublicContainer()
+    return this._getPublicContainer()
       .then((md) => this._getMDataValueForKey(md, path.split('/').slice(0, 3).join('/')))
       .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((serMd) => {
         const files = [];
+        let result = [];
         const rootName = path.split('/').slice(3).join('/');
         return serMd.getEntries()
           .then((entries) => entries.forEach((key, val) => {
@@ -329,8 +337,7 @@ class SafeApi {
             }
             files.unshift(keyStr);
           })).then(() => {
-            let result = [];
-            const nfs = mdata.emulateAs('NFS');
+            const nfs = serMd.emulateAs('NFS');
             return Promise.all(files.map((file) => {
               return nfs.fetch(file)
                 .then((f) => this.app.immutableData.fetch(f.dataMapName))
@@ -346,6 +353,13 @@ class SafeApi {
             })).then(() => result);
           });
       });
+  }
+
+  getServiceContainerMeta(path) {
+    return this._getPublicContainer()
+      .then((md) => this._getMDataValueForKey(md, path))
+      .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
+      .then((serMd) => serMd.getNameAndTag());
   }
 
   updateServiceIfExist(publicName, serviceName, path) {

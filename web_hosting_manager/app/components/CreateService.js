@@ -35,7 +35,8 @@ export default class CreateService extends Component {
         isCreatingContainerAndService: false
       });
     } else if (this.props.creatingService && !nextProps.creatingService) {
-      this.props.router.goBack();
+      const servicePath = this.state.isCreatingContainerAndService ? `_public/${this.props.params.publicId}/${this.state.containerName}` : this.containerName;
+      this.props.router.replace(`files/${this.state.serviceName}/${this.props.params.publicId}/${encodeURIComponent(servicePath)}`);
     }
   }
 
