@@ -39,15 +39,15 @@ export class FileUploadTask extends Task {
     }
     const containerPath = parseContainerPath(this.networkPath);
 
-    return app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC)
-      .then((mdata) => mdata.encryptKey(containerPath.target).then((encKey) => mdata.get(encKey)).then((value) => mdata.decrypt(value.buf)))
+    return safeApi.getPublicContainer()
+      .then((md) => safeApi.getMDataValueForKey(md, containerPath.target))
       .then((val) => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.create(fs.readFileSync(this.localPath))
           .then((file) => nfs.insert(containerPath.file, file)
             .catch((err) => {
-              if (err.code === -106) {
+              if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
                 return Promise.reject(err);
               }
               return mdata.get(containerPath.file)

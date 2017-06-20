@@ -93,7 +93,7 @@ class SafeApi {
    */
   fetchPublicNames() {
     const self = this;
-    return this._getPublicNamesContainer()
+    return this.getPublicNamesContainer()
       .then((md) => md.getKeys()
         .then((keys) => keys.len()
           .then((keysLen) => {
@@ -113,7 +113,7 @@ class SafeApi {
                   }
                 })
                 .catch((err) => { // FIXME shankar - to be removed once fixed symmetric decipher failure for unknown key decryption.
-                  if (err.code === -3) {
+                  if (err.code === CONSTANTS.ERROR_CODE.SYMMETRIC_DECIPHER_FAILURE) {
                     return Promise.resolve();
                   }
                   return Promise.reject(err);
@@ -132,8 +132,8 @@ class SafeApi {
     const publicNames = Object.getOwnPropertyNames(this.publicNames);
     return Promise.all(publicNames.map((publicName) => {
       const services = {};
-      return this._getPublicNamesContainer()
-        .then((md) => this._getMDataValueForKey(md, publicName))
+      return this.getPublicNamesContainer()
+        .then((md) => this.getMDataValueForKey(md, publicName))
         .then((value) => this.app.mutableData.newPublic(value, CONSTANTS.TAG_TYPE.DNS))
         .then((md) => md.getEntries()
           .then((entries) => entries.forEach((key, val) => {
@@ -182,7 +182,7 @@ class SafeApi {
           .then((perm) => this.app.mutableData.newEntries()
             .then((entries) => md.put(perm, entries)))
           .then(() => md.getNameAndTag())
-          .then((mdMeta) => this._getPublicNamesContainer()
+          .then((mdMeta) => this.getPublicNamesContainer()
             .then((pubMd) => this._insertToMData(pubMd, name, mdMeta.name, true)));
       });
   }
@@ -206,7 +206,7 @@ class SafeApi {
     }
 
     return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES)
-      .then((md) => this._getMDataValueForKey(md, publicName))
+      .then((md) => this.getMDataValueForKey(md, publicName))
       .then((decVal) => this.app.mutableData.newPublic(decVal, CONSTANTS.TAG_TYPE.DNS))
       .then((md) => this._insertToMData(md, serviceName, pathXORName)
         .catch((err) => {
@@ -232,14 +232,14 @@ class SafeApi {
   createServiceContainer(path) {
     return this.app.mutableData.newRandomPublic(CONSTANTS.TAG_TYPE.WWW)
       .then((md) => md.quickSetup({}).then(() => md.getNameAndTag()))
-      .then((mdMeta) => this._getPublicContainer()
+      .then((mdMeta) => this.getPublicContainer()
         .then((pubMd) => this._insertToMData(pubMd, path, mdMeta.name))
         .then(() => mdMeta.name));
   }
 
-  getPublicContainer() {
+  getPublicContainerKeys() {
     const publicKeys = [];
-    return this._getPublicContainer()
+    return this.getPublicContainer()
       .then((pubMd) => pubMd.getKeys())
       .then((keys) => keys.len()
         .then((len) => {
@@ -263,17 +263,17 @@ class SafeApi {
       fileName = path.basename(netPath);
     }
 
-    return this._getPublicContainer()
+    return this.getPublicContainer()
       .then((pubMd) => {
         // delete file
         if (fileName) {
-          return this._getMDataValueForKey(pubMd, dirName)
+          return this.getMDataValueForKey(pubMd, dirName)
             .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
             .then((md) => this._removeFromMData(md, fileName));
         }
 
         // delete directory
-        return this._getMDataValueForKey(pubMd, netPath.split('/').slice(0, -1).join('/'))
+        return this.getMDataValueForKey(pubMd, netPath.split('/').slice(0, -1).join('/'))
           .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
           .then((dirMd) => {
             const fileKeys = [];
@@ -297,19 +297,19 @@ class SafeApi {
   }
 
   remapService(publicName, serviceName, path) {
-    return this._getPublicContainer()
-      .the((pubMd) => this._getMDataValueForKey(pubMd, path))
+    return this.getPublicContainer()
+      .the((pubMd) => this.getMDataValueForKey(pubMd, path))
       .then((containerVal) => {
-        return this._getPublicNamesContainer()
-          .then((pnMd) => this._getMDataValueForKey(pnMd, publicName))
+        return this.getPublicNamesContainer()
+          .then((pnMd) => this.getMDataValueForKey(pnMd, publicName))
           .then((pnVal) => this.app.mutableData.newPublic(pnVal, CONSTANTS.TAG_TYPE.DNS))
           .then((md) => _updateMDataKey(md, serviceName, containerVal));
       });
   }
 
   getServiceContainer(path) {
-    return this._getPublicContainer()
-      .then((md) => this._getMDataValueForKey(md, path.split('/').slice(0, 3).join('/')))
+    return this.getPublicContainer()
+      .then((md) => this.getMDataValueForKey(md, path.split('/').slice(0, 3).join('/')))
       .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((serMd) => {
         const files = [];
@@ -356,15 +356,15 @@ class SafeApi {
   }
 
   getServiceContainerMeta(path) {
-    return this._getPublicContainer()
-      .then((md) => this._getMDataValueForKey(md, path))
+    return this.getPublicContainer()
+      .then((md) => this.getMDataValueForKey(md, path))
       .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((serMd) => serMd.getNameAndTag());
   }
 
   updateServiceIfExist(publicName, serviceName, path) {
-    return this._getPublicNamesContainer()
-      .then((pnMd) => this._getMDataValueForKey(pnMd, publicName))
+    return this.getPublicNamesContainer()
+      .then((pnMd) => this.getMDataValueForKey(pnMd, publicName))
       .then((val) => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.DNS))
       .then((md) => {
         return md.get(serviceName)
@@ -372,12 +372,12 @@ class SafeApi {
             if (value.buf.length !== 0) {
               return;
             }
-            return this._getPublicContainer()
-              .then((pubMd) => this._getMDataValueForKey(pubMd, path))
+            return this.getPublicContainer()
+              .then((pubMd) => this.getMDataValueForKey(pubMd, path))
               .then((val) => this._updateMDataKey(md, serviceName, val));
           })
           .catch((err) => {
-            if (err.code === -106) {
+            if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
               return Promise.resolve(false);
             }
             return Promise.reject();
@@ -401,6 +401,26 @@ class SafeApi {
 
   cancelFileDownload = () => {
     this.downloader.cancel();
+  }
+
+  getPublicContainer() {
+    if (!this.app) {
+      return Promise.reject(new Error('Application is not connected.'));
+    }
+    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC);
+  }
+
+  getPublicNamesContainer() {
+    if (!this.app) {
+      return Promise.reject(new Error('Application is not connected.'));
+    }
+    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES);
+  }
+
+  getMDataValueForKey(md, key) {
+    return md.encryptKey(key)
+      .then((encKey) => md.get(encKey))
+      .then((value) => md.decrypt(value.buf));
   }
 
   _updateMDataKey(md, key, value) {
@@ -443,33 +463,13 @@ class SafeApi {
 
   _getServicePath(serviceXorName) {
     let path = null;
-    return this._getPublicContainer()
+    return this.getPublicContainer()
       .then((md) => md.getEntries()
         .then((entries) => entries.forEach((key, val) => {
           if (val.buf.equals(serviceXorName.buf)) {
             path = key.toString();
           }
         }))).then(() => path);
-  }
-
-  _getPublicContainer() {
-    if (!this.app) {
-      return Promise.reject(new Error('Application is not connected.'));
-    }
-    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC);
-  }
-
-  _getPublicNamesContainer() {
-    if (!this.app) {
-      return Promise.reject(new Error('Application is not connected.'));
-    }
-    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES);
-  }
-
-  _getMDataValueForKey(md, key) {
-    return md.encryptKey(key)
-      .then((encKey) => md.get(encKey))
-      .then((value) => md.decrypt(value.buf));
   }
 }
 const safeApi = new SafeApi();

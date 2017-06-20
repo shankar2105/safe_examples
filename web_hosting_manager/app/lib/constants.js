@@ -44,6 +44,7 @@ const CONSTANTS = {
     REVOKED: 'revoked'
   },
   ERROR_CODE: {
+    SYMMETRIC_DECIPHER_FAILURE: -3,
     NO_SUCH_ENTRY: -106
   },
   MAX_FILE_SIZE: 20 * 1024 * 1024

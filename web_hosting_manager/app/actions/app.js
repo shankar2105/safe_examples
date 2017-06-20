@@ -120,7 +120,7 @@ export const getServices = () => {
 export const getPublicContainers = () => {
   return {
     type: ACTION_TYPES.FETCH_PUBLIC_CONTAINERS,
-    payload: api.getPublicContainer()
+    payload: api.getPublicContainerKeys()
   };
 };
 
