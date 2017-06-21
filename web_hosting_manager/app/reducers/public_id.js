@@ -156,6 +156,7 @@ const publicId = (state: Object = initialState, action: Object) => {
     case ACTION_TYPES.CLEAR_NOTIFICATION:
       state = {
         ...state,
+        creatingPublicId: false,
         error: undefined
       };
       break;

@@ -127,7 +127,7 @@ export const getPublicContainers = () => {
 export const remapService = (service: string, publicId: string, containerPath: string) => {
   return {
     type: ACTION_TYPES.REMAP_SERVICE,
-    payload: api.remapService(service, publicId, containerPath)
+    payload: api.remapService(publicId, service, containerPath)
       .then(() => api.fetchServices())
   };
 };
