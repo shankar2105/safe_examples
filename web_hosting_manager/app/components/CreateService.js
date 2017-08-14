@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { Button, Card, Input, Select, Icon } from 'antd';
 import { I18n } from 'react-redux-i18n';
 import { domainCheck } from '../utils/app_utils';
+import Alert from './Alert';
+import CONSTANTS from '../constants';
 
 import Nav from './Nav';
 
@@ -15,7 +17,10 @@ export default class CreateService extends Component {
       containerName: '',
       isCreatingContainerAndService: false,
       serviceError: '',
-      containerError: ''
+      containerError: '',
+      showAlert: false,
+      alertTitle: null,
+      alertDesc: null
     };
   }
 
@@ -32,12 +37,27 @@ export default class CreateService extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.creatingService && !nextProps.creatingService && nextProps.serviceError) {
+      console.log('this.props.serviceErrorCode', nextProps.serviceErrorCode);
+      if (nextProps.serviceErrorCode === CONSTANTS.ERROR_CODE.INVALID_SIGN_KEY_HANDLE) {
+        this.setState({
+          showAlert: true,
+          alertTitle: 'Send MD Auth Request',
+          alertDesc: 'Send MD Auth request to authenticator'
+        });
+      }
       this.setState({
         isCreatingContainerAndService: false
       });
     } else if (this.props.creatingService && !nextProps.creatingService) {
       const servicePath = this.state.isCreatingContainerAndService ? `_public/${this.props.params.publicId}/${this.state.containerName}` : this.containerName;
       this.props.router.replace(`files/${this.state.serviceName}/${this.props.params.publicId}/${encodeURIComponent(servicePath)}`);
+    }
+    if (nextProps.isMDAuthorised) {
+      this.setState({
+        showAlert: true,
+        alertTitle: 'MD Authorised',
+        alertDesc: 'MD Authorised'
+      });
     }
   }
 
@@ -112,6 +132,14 @@ export default class CreateService extends Component {
     });
   }
 
+  onClickAlertOk() {
+    if (!this.props.isMDAuthorised) {
+      return this.props.authoriseMD(this.props.params.publicId);
+    }
+    console.log("MD Authorised");
+    this.setState({showAlert: false});
+  }
+
   render() {
     const Option = Select.Option;
     const publicContainers = this.props.publicContainers.map((containerName) => {
@@ -180,6 +208,13 @@ export default class CreateService extends Component {
             </div>
           </Card>
         </div>
+        {this.state.showAlert ? 
+          <Alert 
+            title={this.state.alertTitle}
+            desc={this.state.alertDesc}
+            loading={this.props.isMDAuthorising}
+            onSuccess={this.onClickAlertOk.bind(this)} 
+          /> : null}
       </div>
     );
   }

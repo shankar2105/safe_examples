@@ -12,6 +12,10 @@ const clearAccessData = () => {
   mainWindow.webContents.send('clear-access-data', true);
 };
 
+const sendMock = () => {
+  sendResponse('safe-bmv0lm1hawrzywzllndlymhvc3rpbmdtyw5hz2vy:AQAAAK1GJqkAAAAAAAAAACAAAAAAAAAA-vdwaUhisqIR7vzwEidCYpMn1va0XAL5aNM5eOEzgRYgAAAAAAAAAEpj1avIyGJgHFFZBJ7_2fOdrrBd-6qJYLxyfcWx1MVfIAAAAAAAAAB8Rihpp-gkjb2NqAYJnGGgqfKa1LKclbDqMaMukoc4jUAAAAAAAAAAs-PAwHIKxiBnIPKXZI-BaM_Zs8Vp2luJsSy9kYKcR3p8Rihpp-gkjb2NqAYJnGGgqfKa1LKclbDqMaMukoc4jSAAAAAAAAAAWBWJW80sTACsKNFRhVFeZIUthiJzaTwRQd0ExLrFu18gAAAAAAAAAJA_IXrqgMYdNBvxUoHZP7hbHdkmSfc8fBnZzFGRem2FAAAAAAAAAAAAAAAAAAAAAFBEo9j8mtZxf-ZDa7RaobT3Q8wKjZ_9OBbOQCpOlwMnmDoAAAAAAAAYAAAAAAAAAF-LFzBzdUaN0HPj3vRH1OFHZ2pZcc_ZyA==')
+}
+
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support'); // eslint-disable-line
@@ -84,9 +88,9 @@ app.on('ready', async () => {
   if (shouldQuit) {
     app.quit();
   }
-
+  mainWindow.openDevTools();
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.openDevTools();
+    // mainWindow.openDevTools();
     mainWindow.webContents.on('context-menu', (e, props) => {
       const { x, y } = props;
 
@@ -109,6 +113,11 @@ app.on('ready', async () => {
         label: '&Clear Access Data',
         click() {
           clearAccessData();
+        }
+      }, {
+        label: '&Send Mock',
+        click() {
+          sendMock();
         }
       }, {
         type: 'separator'
