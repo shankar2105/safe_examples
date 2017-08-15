@@ -263,12 +263,10 @@ class SafeApi {
   }
 
   checkPublicNameAccessible(publicName) {
-    return this.app.crypto.getAppPubSignKey()
-      .then((signKey) => this.getPublicNamesContainer()
+    return this.getPublicNamesContainer()
         .then((md) => this.getMDataValueForKey(md, publicName))
         .then((decVal) => this.app.mutableData.newPublic(decVal, CONSTANTS.TAG_TYPE.DNS))
-        .then((md) => md.getPermissions())
-        .then((perm) => perm.getPermissionSet(signKey)));
+        .then((md) => this._checkMDAccessible(md));
   }
 
   getPublicContainerKeys() {
@@ -350,7 +348,7 @@ class SafeApi {
         const files = [];
         let result = [];
         const rootName = path.split('/').slice(3).join('/');
-        return serMd.getEntries()
+        return this._checkMDAccessible(serMd).then(() => serMd.getEntries())
           .then((entries) => entries.forEach((key, val) => {
             if (val.buf.length === 0) {
               return;
@@ -456,6 +454,12 @@ class SafeApi {
     return md.encryptKey(key)
       .then((encKey) => md.get(encKey))
       .then((value) => md.decrypt(value.buf));
+  }
+
+  _checkMDAccessible(md) {
+    return md.getPermissions()
+      .then((perm) => this.app.crypto.getAppPubSignKey()
+        .then((signKey) => perm.getPermissionSet(signKey)));
   }
 
   _updateMDataKey(md, key, value) {

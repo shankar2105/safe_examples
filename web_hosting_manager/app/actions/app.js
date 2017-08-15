@@ -256,3 +256,7 @@ export const clearAccessData = () => {
     type: ACTION_TYPES.CLEAR_ACCESS_DATA
   };
 };
+
+export const ackMDConnect = () => ({
+  type: ACTION_TYPES.MD_CONNECT_ACK
+});

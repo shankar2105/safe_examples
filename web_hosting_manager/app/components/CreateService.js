@@ -20,7 +20,8 @@ export default class CreateService extends Component {
       containerError: '',
       showAlert: false,
       alertTitle: null,
-      alertDesc: null
+      alertDesc: null,
+      isMDAuthorisedAck: false
     };
   }
 
@@ -52,7 +53,7 @@ export default class CreateService extends Component {
       const servicePath = this.state.isCreatingContainerAndService ? `_public/${this.props.params.publicId}/${this.state.containerName}` : this.containerName;
       this.props.router.replace(`files/${this.state.serviceName}/${this.props.params.publicId}/${encodeURIComponent(servicePath)}`);
     }
-    if (nextProps.isMDAuthorised) {
+    if (nextProps.isMDAuthorised && !nextProps.isMDAuthorisedAck) {
       this.setState({
         showAlert: true,
         alertTitle: 'MD Authorised',
@@ -136,8 +137,8 @@ export default class CreateService extends Component {
     if (!this.props.isMDAuthorised) {
       return this.props.authoriseMD(this.props.params.publicId);
     }
-    console.log("MD Authorised");
-    this.setState({showAlert: false});
+    this.props.ackMDConnect();
+    this.setState({showAlert: false, alertDesc: null, alertTitle: null});
   }
 
   render() {

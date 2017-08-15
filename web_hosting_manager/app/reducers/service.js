@@ -13,6 +13,7 @@ const initialState = {
   errorCode: null,
   isMDAuthorised: false,
   isMDAuthorising: false,
+  isMDAuthorisedAck: false,
 };
 
 const service = (state: Object = initialState, action: Object) => {
@@ -131,6 +132,8 @@ const service = (state: Object = initialState, action: Object) => {
       state = {
         ...state,
         isMDAuthorising: true,
+        isMDAuthorised: false,
+        isMDAuthorisedAck: false,
         error: null
       };
       break;
@@ -148,6 +151,12 @@ const service = (state: Object = initialState, action: Object) => {
         isMDAuthorised: false,
         error: 'Failed to authorise MD'
       };
+      break;
+    case ACTION_TYPES.MD_CONNECT_ACK:
+      state = {
+        ...state,
+        isMDAuthorisedAck: true
+      }
       break;
   }
   return state;
