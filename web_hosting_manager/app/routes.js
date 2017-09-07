@@ -1,17 +1,15 @@
-// @flow
+/* eslint flowtype-errors/show-errors: 0 */
 import React from 'react';
-import { Route, IndexRoute } from 'react-router';
+import { Switch, Route } from 'react-router';
 import App from './containers/App';
-import AuthPage from './containers/AuthPage';
-import HomePage from './containers/HomePage';
-import CreateService from './containers/CreateService';
-import FileExplorer from './containers/FileExplorer';
+import AuthorisationPage from './containers/AuthorisationPage';
+import InitialisePage from './containers/InitialisationPage';
 
-export default (
-  <Route path="/" component={App}>
-    <IndexRoute component={AuthPage} />
-    <Route path="home" component={HomePage}/>
-    <Route path="service/:publicId" component={CreateService}/>
-    <Route path="files/:service/:publicId/:containerPath" component={FileExplorer}/>
-  </Route>
+export default () => (
+  <App>
+    <Switch>
+      <Route path="/initialise" component={InitialisePage} />
+      <Route path="/" component={AuthorisationPage} />
+    </Switch>
+  </App>
 );

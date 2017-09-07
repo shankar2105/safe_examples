@@ -19,15 +19,22 @@ class SafeApi {
     this.downloader = null;
   }
 
+  mockRes(err) {
+    return new Promise((res, rej) => {
+      setTimeout(() => {
+        if (err) {
+          return rej(new Error(err))
+        }
+        res()
+      }, 2000);
+    });
+  }
+
   /**
    * Authorise with SAFE Authenticator
    * @return {Promise}
    */
-  authorise() {
-    const authInfo = utils.localAuthInfo.get();
-    if (authInfo) {
-      return authInfo;
-    }
+  sendAuthReq() {
     return safeApp.initializeApp(this.APP_INFO.data)
       .then((app) => app.auth.genAuthUri(this.APP_INFO.permissions, this.APP_INFO.opt))
       .then((res) => utils.openExternal(res.uri));
@@ -39,11 +46,9 @@ class SafeApi {
    * @return {*}
    */
   connect(uri, nwStateChangeCb) {
-    const authInfo = uri || JSON.parse(utils.localAuthInfo.get());
+    const authInfo = uri;
     if (!authInfo) {
-      // FIXME shankar - handle from action
-      // return Promise.reject(new Error('Missing Authorisation information.'));
-      return this.authorise();
+      return Promise.reject(new Error('Missing Authorisation information.'));
     }
     return safeApp.fromAuthURI(this.APP_INFO.data, authInfo, nwStateChangeCb)
       .then((app) => {
