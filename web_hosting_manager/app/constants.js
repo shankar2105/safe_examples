@@ -66,6 +66,19 @@ const CONSTANTS = {
     FROM_START: 0,
     TILL_END: 0
   },
-  MD_META_KEY: '_metadata'
+  MD_META_KEY: '_metadata',
+  UI: {
+    POPUP_TYPES: {
+      LOADING: 'LOADING',
+      ERROR: 'ERROR',
+      AUTH_REQ: 'AUTH_REQ'
+    },
+    NEW_WEBSITE_OPTIONS: {
+      TEMPLATE: 'TEMPLATE',
+      FROM_SCRATCH: 'FROM_SCRATCH',
+      CHOOSE_EXISTING: 'CHOOSE_EXISTING'
+    },
+    DEFAULT_SERVICE_CONTAINER_PREFIX: 'root-'
+  }
 };
 export default CONSTANTS;

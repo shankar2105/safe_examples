@@ -15,7 +15,11 @@ body
 
 .root
   background-color: bg-root
+  position: fixed
+  width: 100%
   height: 100%
+  top: 0
+  left: 0
   &-b
     height 100%
     .root-container
@@ -25,6 +29,8 @@ body
         overflow: auto
         height: 100%
         position: relative
+        &.no-scroll
+          overflow: visible
 
 .card
   width: cntr-wight

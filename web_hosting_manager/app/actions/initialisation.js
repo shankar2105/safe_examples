@@ -1,5 +1,9 @@
 import ACTION_TYPES from './action_types';
 import api from '../lib/api';
+import {
+  setPublicNames,
+  setServiceContainers
+} from './public_names';
 
 const nwStateCallback = (dispatch) => {
   return function (state) {
@@ -34,7 +38,10 @@ export const initialiseApp = () => {
   return (dispatch, getState) => {
     let state = getState();
     if (!(state.authorisation.authorised && state.authorisation.authRes)) {
-      console.log('Error :: Authorise the app');
+      dispatch({
+        type: `${ACTION_TYPES.INITIALISE_APP}_REJECTED`,
+        error: new Error('Application not authorised.')
+      })
       return;
     }
     return dispatch({
@@ -42,23 +49,33 @@ export const initialiseApp = () => {
       payload: api.connect(state.authorisation.authRes, nwStateCallback)
         .then(() => {
           dispatch(connected());
+          // check access container permission
           return api.canAccessContainers();
         })
         .then(() => {
           dispatch(fetchedAccessInfo());
+          // fetch public names
           return api.fetchPublicNames();
         })
         .then(() => {
           dispatch(fetchedPublicNames());
+          // get _public container entires
           return api.getPublicContainerKeys();
         })
-        .then(() => {
+        .then((containers) => {
+          dispatch(setServiceContainers(containers));
           dispatch(fetchedPublicContainer());
+          // fetch services
           return api.fetchServices();
         })
-        .then(() => {
+        .then((publicNames) => {
+          dispatch(setPublicNames(publicNames));
           dispatch(fetchedServices());
         })
     });
   };
 };
+
+export const reset = () => ({
+  type: ACTION_TYPES.RESET_INITIALISATION
+});

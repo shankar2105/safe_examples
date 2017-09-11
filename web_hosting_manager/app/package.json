@@ -15,8 +15,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "npm-font-open-sans": "^1.0.3",
     "classnames": "^2.2.5",
+    "lodash": "^4.17.4",
+    "npm-font-open-sans": "^1.0.3",
     "safe-app": "https://s3.eu-west-2.amazonaws.com/safe-app-nodejs/safe-app-0.2.0.tgz",
     "temp": "^0.8.3"
   }

@@ -29,6 +29,11 @@ export default function authorisation(state = initState, action) {
         authoriseErr: null,
         authRes
       };
+    case actionTypes.RESET_AUTHORISATION:
+      return {
+        ...state,
+        ...initState
+      };
     default:
       return state;
   }

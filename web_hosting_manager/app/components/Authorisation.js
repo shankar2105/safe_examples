@@ -2,26 +2,62 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import CONSTANTS from '../constants';
 import Base from './_Base';
 
 export default class Authorisation extends Component {
   constructor() {
     super();
+    this.state = {
+      showPopup: false,
+      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
+      popupDesc: null
+    };
   }
 
   componentDidMount() {
+    // send auth request on load
     this.props.sendAuthReq();
   }
 
   componentDidUpdate() {
+    // locate to initialise page on auth success
     if (this.props.authorised && this.props.location.pathname === '/') {
       this.props.history.replace('initialise');
+      return;
     }
+    
+    // show error popup on authorisation fails
+    if (this.props.authoriseErr && !this.state.showPopup) {
+      this.showErrorPopup(this.props.authoriseErr);
+    }
+  }
+
+  showErrorPopup(err) {
+    const errMsg = err instanceof Error ? err.message : err;
+    this.setState({
+      showPopup: true,
+      popupDesc: errMsg
+    });
+  }
+
+  popupOkCb() {
+    // reset authorisation error
+    this.props.reset();
+
+    this.setState({
+      showPopup: false
+    });
   }
 
   render() {
     return (
-      <Base>
+      <Base 
+        showPopup={this.state.showPopup} 
+        popupType={this.state.popupType} 
+        popupDesc={this.state.popupDesc} 
+        popupOkCb={this.popupOkCb.bind(this)}
+      >
         <div className="card">
           <div className="card-b">
             <h3 className="h type-center">Waiting for Authorisation</h3>

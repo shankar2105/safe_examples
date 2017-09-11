@@ -32,7 +32,7 @@
 
 .new-public-id
   .b
-    padding: 0 10px
+    padding: 0 10px 15px
     .inpt
       input
         width: 100%
@@ -49,6 +49,7 @@
       color: err-red
       position: relative
       line-height: 20px
+
       &:before
         content: ""
         width: 20px
@@ -83,14 +84,17 @@
       display: inline-block
       width: 33.33%
       float: left
-      a
-        text-decoration: none
+      .b
+        margin: 0 5.5px
+        padding: 0 12px 24px
+        text-align: center
+        background-color: bg-new-website-option
         color: color-common-text
-        display: block
+        cursor: pointer
         &:hover
+        &.active
+          background-color: bg-new-website-option-hover
           color: #ffffff
-          .b
-            background-color: bg-new-website-option-hover
           .icon
             &.use-template
               background-image: url(url-use-template-hover)
@@ -98,11 +102,6 @@
               background-image: url(url-new-website-hover)
             &.choose-existing
               background-image: url(url-choose-existing-hover)
-      .b
-        margin: 0 5.5px
-        padding: 0 12px 24px
-        text-align: center
-        background-color: bg-new-website-option
         .icon
           width: 100%
           height: 160px
@@ -156,6 +155,11 @@
           border: 1px solid #979797
           position: relative
           cursor: pointer
+          &.null
+            opacity: 0.5
+            cursor: not-allowed
+            &:after
+              display: none
           &:after
             content: ""
             position: absolute
@@ -188,6 +192,7 @@
         top: 0
         right: 0
         border-left: 1px solid #979797
+        height: 100%
         button
           width: 46px
           height 46px
@@ -259,7 +264,6 @@
           float: right
           margin: 21px 0
       .edit
-        display: none
         clearfix()
         .root-name
           line-height: 72px
@@ -278,16 +282,23 @@
             border: solid 1px #979797
             font-size: 20px
             padding: 0 12px
-        .opt
-          display: inline-block
+        .opts
           float: right
-          button
-            line-height: 30px
-            font-size: 20px
-            font-weight: bold
-            color: color-pr-blue
-            float: right
-            margin: 21px 0
+          display: inline-block
+          .opt
+            display: inline-block
+            // float: right
+            &:not(:last-child)
+              margin-right: 30px
+            button
+              color: color-common-text
+              line-height: 30px
+              font-size: 20px
+              font-weight: bold
+              float: right
+              margin: 21px 0
+              &.save
+                color: color-pr-blue
 
 .file-explorer
   > .b

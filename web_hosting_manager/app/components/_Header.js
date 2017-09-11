@@ -1,6 +1,7 @@
 // @flow
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { NavLink } from 'react-router-dom';
 
 export default class Header extends Component {
   getPublicIdBtn() {
@@ -9,11 +10,7 @@ export default class Header extends Component {
         <button
           className="btn-with-add-icon"
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-
-          }}
-        >New public ID</button>
+          ><NavLink to="newPublicName">New public ID</NavLink></button>
       </div>
     );
   }

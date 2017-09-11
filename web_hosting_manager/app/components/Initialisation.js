@@ -3,19 +3,54 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
+import CONSTANTS from '../constants';
 import Base from './_Base';
 
 export default class Initialisation extends Component {
   constructor() {
     super();
+    this.state = {
+      showPopup: false,
+      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
+      popupDesc: null
+    };
   }
 
   componentDidMount() {
+    // initialise app
     this.props.initialiseApp();
   }
 
   componentDidUpdate() {
+    // on initialisation done redirect to public names page (Home page)
+    if (this.props.fetchedServices && !this.props.loading) {
+      this.props.history.replace('publicNames');
+      return;
+    }
+    // show error popup on initilisation
+    if (this.props.error && !this.state.showPopup) {
+      this.showErrorPopup(this.props.error);
+    }
+  }
 
+  showErrorPopup(err) {
+    const errMsg = err instanceof Error ? err.message : err;
+    this.setState({
+      showPopup: true,
+      popupDesc: errMsg
+    });
+  }
+
+  popupOkCb() {
+    // reset initialisation error
+    this.props.reset();
+
+    this.setState({
+      showPopup: false
+    });
+    
+    // move to authorisation page after error popup
+    this.props.history.replace('/');
   }
 
   render() {
@@ -54,7 +89,12 @@ export default class Initialisation extends Component {
     });
 
     return (
-      <Base>
+      <Base
+        showPopup={this.state.showPopup} 
+        popupType={this.state.popupType} 
+        popupDesc={this.state.popupDesc} 
+        popupOkCb={this.popupOkCb.bind(this)}
+      >
         <div className="card">
           <div className="card-b">
             <h3 className="h type-center">Initialising Application</h3>

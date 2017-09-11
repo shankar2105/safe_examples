@@ -35,3 +35,7 @@ export const reconnectApp = () => ({
     type: actionTypes.RECONNECT_APP,
     payload: api.reconnect()
 });
+
+export const reset = () => ({
+  type: actionTypes.RESET_AUTHORISATION
+});

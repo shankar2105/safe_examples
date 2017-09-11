@@ -26,7 +26,7 @@ export default function authorisation(state = initState, action) {
       return {
         ...state,
         loading: false,
-        error: action.payload.message
+        error: action.payload ? action.payload.message : action.error
       };
     case ACTION_TYPE.CONNECTED:
       return {
@@ -53,6 +53,11 @@ export default function authorisation(state = initState, action) {
         ...state,
         fetchedServices: true,
       };
+    case ACTION_TYPE.RESET_INITIALISATION:
+      return {
+        ...state,
+        ...initState
+      }
     default:
       return state;
   }

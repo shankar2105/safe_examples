@@ -6,7 +6,8 @@ import * as authorisationAction from '../actions/authorisation';
 
 function mapStateToProps(state) {
   return {
-    authorised: state.authorisation.authorised
+    authorised: state.authorisation.authorised,
+    authoriseErr: state.authorisation.authoriseErr
   };
 }
 
