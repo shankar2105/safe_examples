@@ -1,3 +1,5 @@
+// @flow
+
 import ACTION_TYPES from './action_types';
 import api from '../lib/api';
 import {

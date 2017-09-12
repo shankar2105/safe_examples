@@ -8,14 +8,17 @@ import PublicNamesPage from './containers/PublicNamesPage';
 import NewPublicNamePage from './containers/NewPublicNamePage';
 import ChooseExistingContainerPage from './containers/ChooseExistingContainerPage';
 import CreateServiceContainerPage from './containers/CreateServiceContainerPage';
+import CreateServicePage from './containers/CreateServicePage';
+import WithTemplatePage from './containers/WithTemplatePage';
 
 // static components
 import NewWebSitePage from './components/NewWebSite';
-import CreateServicePage from './components/CreateService';
+
 
 export default () => (
   <App>
     <Switch>
+      <Route path="/withTemplate/:publicName/:serviceName" component={WithTemplatePage} />
       <Route path="/createServiceContainer/:publicName/:serviceName" component={CreateServiceContainerPage} />
       <Route path="/createService/:option/:publicName" component={CreateServicePage} />
       <Route path="/chooseExistingContainer/:publicName/:serviceName" component={ChooseExistingContainerPage} />

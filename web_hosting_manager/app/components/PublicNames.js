@@ -14,7 +14,11 @@ export default class PublicNames extends Component {
       popupDesc: null
     };
   }
-  
+
+  componentDidMount() {
+    this.props.fetchServices();
+  }
+
   showErrorPopup(err) {
     const errMsg = err instanceof Error ? err.message : err;
     this.setState({
@@ -75,8 +79,8 @@ export default class PublicNames extends Component {
         >
           <div className="i-name" title="Public ID 1">{publicName}</div>
           <div className="i-new-btn">
-              <button 
-                className="btn-with-add-icon" 
+              <button
+                className="btn-with-add-icon"
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -126,9 +130,9 @@ export default class PublicNames extends Component {
       <Base
         scrollableContainer={!hasPublicNames}
         showHeaderOpts
-        showPopup={this.state.showPopup} 
-        popupType={this.state.popupType} 
-        popupDesc={this.state.popupDesc} 
+        showPopup={this.state.showPopup}
+        popupType={this.state.popupType}
+        popupDesc={this.state.popupDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         {container}

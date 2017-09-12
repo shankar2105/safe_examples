@@ -1,3 +1,5 @@
+// @flow
+
 import ACTION_TYPES from './action_types';
 import api from '../lib/api';
 
@@ -21,7 +23,7 @@ export const createPublicName = (publicName) => {
         .then((publicNames) => dispatch(setPublicNames(publicNames)))
     });
   };
-}
+};
 
 export const getServiceContainers = () => {
   return (dispatch) => {
@@ -29,6 +31,17 @@ export const getServiceContainers = () => {
       type: ACTION_TYPES.FETCH_SERVICE_CONTAINERS,
       payload: api.getPublicContainerKeys()
         .then((containers) => dispatch(setServiceContainers(containers)))
+    });
+  };
+};
+
+export const fetchServices = () => {
+  return (dispatch) => {
+    dispatch({
+      type: ACTION_TYPES.FETCH_SERVICES,
+      payload: api.fetchPublicNames()
+        .then(() => api.fetchServices())
+        .then((publicNames) => dispatch(setPublicNames(publicNames)))
     });
   };
 };

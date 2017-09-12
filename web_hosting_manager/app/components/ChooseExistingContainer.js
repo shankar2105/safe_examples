@@ -13,9 +13,21 @@ export default class ChooseExistingContainer extends Component {
     this.state = {
       showPopup: false,
       popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: null
+      popupDesc: null,
+      selectedContainer: null,
+      selectedContainerExpanded: false
     };
     this.getServiceContainersList = this.getServiceContainersList.bind(this);
+  }
+
+  componentWillMount() {
+    const {serviceContainers} = this.props;
+
+    if (serviceContainers.length !== 0) {
+      this.setState({
+        selectedContainer: serviceContainers[0]
+      });
+    }
   }
 
   componentDidUpdate() {
@@ -29,6 +41,16 @@ export default class ChooseExistingContainer extends Component {
       }
       this.showErrorPopup(this.props.error);
     }
+
+    // while publishing website
+    if (this.props.publishing && !this.state.showPopup) {
+      return this.showLoader('Publishing website');
+    } else if (this.props.published) {
+      this.hideLoading();
+      return this.props.history.push('/publicNames');
+    } else if (this.props.publishError) {
+      this.showErrorPopup(this.props.publishError);
+    }
   }
 
   showErrorPopup(err) {
@@ -37,6 +59,14 @@ export default class ChooseExistingContainer extends Component {
       showPopup: true,
       popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
       popupDesc: errMsg
+    });
+  }
+
+  showLoader(desc) {
+    this.setState({
+      showPopup: true,
+      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
+      popupDesc: desc
     });
   }
 
@@ -69,6 +99,13 @@ export default class ChooseExistingContainer extends Component {
     });
   }
 
+  handleContainersSelect(cont) {
+    this.setState({
+      selectedContainer: cont,
+      selectedContainerExpanded: false
+    });
+  }
+
   getServiceContainersList() {
     const { serviceContainers } = this.props;
     if (serviceContainers.length === 0) {
@@ -76,16 +113,30 @@ export default class ChooseExistingContainer extends Component {
         <div className="i"><div className="inpt null">No containers found</div></div>
       );
     }
+    const selectClassName = classNames('i', {
+      open: this.state.selectedContainerExpanded
+    });
 
     return (
-      <div className="i">
-        <div className="inpt">_public/shonaoldham</div>
+      <div className={selectClassName}>
+        <div className="inpt" onClick={() => {
+          this.setState({
+            selectedContainerExpanded: !this.state.selectedContainerExpanded
+          });
+        }}>{this.state.selectedContainer}</div>
         <ul>
-          <li>_public/shonaoldham</li>
-          <li>_public/shonaoldham</li>
-          <li>_public/shonaoldham</li>
-          <li>_public/shonaoldham</li>
-          <li>_public/shonaoldham</li>
+          {
+            serviceContainers.map((cont, i) => {
+              return (
+                <li
+                  key={i}
+                  onClick={() => {
+                    this.handleContainersSelect(cont);
+                  }}
+                >{cont}</li>
+              )
+            })
+          }
         </ul>
       </div>
     );
@@ -96,11 +147,11 @@ export default class ChooseExistingContainer extends Component {
 
     const publicName = params.publicName;
     const serviceName = params.serviceName;
-    
+
     return (
       <Base
-        showPopup={this.state.showPopup} 
-        popupType={this.state.popupType} 
+        showPopup={this.state.showPopup}
+        popupType={this.state.popupType}
         popupDesc={this.state.popupDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
@@ -139,7 +190,17 @@ export default class ChooseExistingContainer extends Component {
                   >Cancel</button>
                 </div>
                 <div className="opt">
-                  <button className="btn flat primary">Publish</button>
+                  <button
+                    type="button"
+                    className="btn flat primary"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!this.state.selectedContainer) {
+                        return;
+                      }
+                      this.props.publish(publicName, serviceName, this.state.selectedContainer);
+                    }}
+                  >Publish</button>
                 </div>
               </div>
             </div>
