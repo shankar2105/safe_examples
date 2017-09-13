@@ -2,12 +2,11 @@ import ACTION_TYPES from '../actions/action_types';
 
 const initState = {
   uploading: false,
-  uploadStatus: 0,
-  error: null,
+  uploadStatus: null,
   containerInfo: null,
   publishing: false,
   published: false,
-  publishError: null
+  error: null
 };
 
 export default function fileManager(state = initState, action) {
@@ -15,6 +14,7 @@ export default function fileManager(state = initState, action) {
     case ACTION_TYPES.UPLOAD_STARTED:
       return {
         ...state,
+        uploadStatus: null,
         uploading: true
       };
 
@@ -22,7 +22,6 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         uploading: false,
-        uploadStatus: undefined,
         error: undefined
       };
 
@@ -36,9 +35,10 @@ export default function fileManager(state = initState, action) {
       return state = {
         ...state,
         uploading: false,
-        uploadStatus: undefined,
+        uploadStatus: null,
         error: action.payload
       };
+
     case `${ACTION_TYPES.GET_CONTAINER_INFO}_FULFILLED`:
       return {
         ...state,
@@ -60,8 +60,10 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         publishing: false,
-        publishError: action.payload.message
+        published: false,
+        error: action.payload.message
       };
+
     case ACTION_TYPES.RESET_FILE_MANAGER:
       return {
         ...state,

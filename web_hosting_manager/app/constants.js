@@ -73,6 +73,11 @@ const CONSTANTS = {
       ERROR: 'ERROR',
       AUTH_REQ: 'AUTH_REQ'
     },
+    POPUP_STATES: {
+      showPopup: false,
+      popupType: null,
+      popupDesc: null
+    },
     NEW_WEBSITE_OPTIONS: {
       TEMPLATE: 'TEMPLATE',
       FROM_SCRATCH: 'FROM_SCRATCH',

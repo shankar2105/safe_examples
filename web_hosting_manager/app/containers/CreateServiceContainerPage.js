@@ -9,11 +9,10 @@ function mapStateToProps(state) {
   return {
     uploading: state.fileManager.uploading,
     uploadStatus: state.fileManager.uploadStatus,
-    uploadError: state.fileManager.error,
     containerInfo: state.fileManager.containerInfo,
     publishing: state.fileManager.publishing,
     published: state.fileManager.published,
-    publishError: state.fileManager.publishError
+    error: state.fileManager.error
   };
 }
 

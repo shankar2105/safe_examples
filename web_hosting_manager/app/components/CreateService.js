@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import CONSTANTS from '../constants';
 import Base from './_Base';
 import WizardNav from './WizardNav';
-import {domainCheck} from '../utils/app';
+import * as utils from '../utils/app';
 
 export default class CreateService extends Component {
   constructor() {
@@ -18,36 +18,45 @@ export default class CreateService extends Component {
     };
   }
 
+  componentDidMount() {
+    if (this.serviceName) {
+      this.serviceName.focus();
+    }
+  }
+
   componentDidUpdate() {
     const { params } = this.props.match;
     const publicName = params.publicName;
     const option = params.option;
     const serviceName = this.serviceName.value.trim();
 
-    if (this.props.checkingService && !this.state.showPopup) {
-      // show loader while checkubg for service entry
-      return this.showLoader('Checking service exists');
-    } else if (this.props.checkedService) {
-      // hide loader on success
-      this.hideLoader();
-
-      // show error if service name exists
-      if (this.props.serviceExists) {
-        return this.showError('Service already exists');
+    if (!this.state.showPopup) { // on no popup
+      if (this.props.checkingService) { // on checking service exists
+        return utils.setLoading(this, 'Checking service exists');
+      } else if (this.props.error) { // on error
+        return utils.setError(this, this.props.error);
       }
+    } else { // on popup
+      if (!this.props.checkingService) { // on checking service exists finished
+        utils.unsetLoading(this); // unset loading
 
-      // if not exist navigate, go next
-      switch(option) {
-        case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.CHOOSE_EXISTING:
-          return this.props.history.push(`/chooseExistingContainer/${publicName}/${serviceName}`);
-        case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.FROM_SCRATCH:
-          return this.props.history.push(`/createServiceContainer/${publicName}/${serviceName}`);
-        case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.TEMPLATE:
-          return this.props.history.push(`/withTemplate/${publicName}/${serviceName}`);
+        // show error if service name exists
+        if (this.props.serviceExists) {
+          return utils.setError(this, 'Service already exists');
+        }
+
+        // if service not exist navigate, go next step
+        switch(option) {
+          case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.CHOOSE_EXISTING:
+            return this.props.history.push(`/chooseExistingContainer/${publicName}/${serviceName}`);
+          case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.FROM_SCRATCH:
+            return this.props.history.push(`/createServiceContainer/${publicName}/${serviceName}`);
+          case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.TEMPLATE:
+            return this.props.history.push(`/withTemplate/${publicName}/${serviceName}`);
+          default:
+            console.error('Unknown option provided for creating service');
+        }
       }
-    } else if (this.props.error) {
-      // show error on fetching service names
-      return this.showError(this.props.error);
     }
   }
 
@@ -61,42 +70,15 @@ export default class CreateService extends Component {
       return;
     }
 
-    if (!domainCheck(serviceName)) {
+    if (!utils.domainCheck(serviceName)) {
       return this.showError('Service name must contain only lowercase alphanumeric characters or - and should contain a min of 3 characters and a max of 62 characters');
     }
 
     this.props.checkServiceExists(publicName, serviceName);
   }
 
-  showLoader(desc) {
-    this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: desc
-    });
-  }
-
-  hideLoader() {
-    if (this.state.popupType !== CONSTANTS.UI.POPUP_TYPES.LOADING) {
-      return;
-    }
-    this.setState({
-      showPopup: false
-    });
-  }
-
-  showError(desc) {
-    return this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: desc
-    });
-  }
-
   popupOkCb() {
-    this.setState({
-      showPopup: false
-    });
+    this.setState(utils.resetPopup());
   }
 
   render() {

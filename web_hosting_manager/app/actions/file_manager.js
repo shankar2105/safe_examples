@@ -66,5 +66,28 @@ export const resetFileManager = () => ({
 });
 
 export const publishTemplate = (publicId, serviceName, containerPath, files) => {
-  upload()
+  return (dispatch) => {
+    let filesDone = 0;
+    let uploadFile = null;
+    const done = () => {
+      filesDone += 1;
+      console.log('file uploaded', files[filesDone]);
+      if (filesDone < files.length) {
+        uploadFile();
+        return;
+      }
+      if (filesDone === files.length) {
+        console.log('published', filesDone);
+        dispatch(publish(publicId, serviceName, containerPath));
+      }
+    };
+
+    uploadFile = () => {
+      const fileToUpload = files[filesDone];
+      console.log('uploading file', fileToUpload);
+      dispatch(upload(fileToUpload, containerPath, done));
+    };
+
+    uploadFile();
+  };
 };

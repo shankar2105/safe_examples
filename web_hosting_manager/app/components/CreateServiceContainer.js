@@ -1,31 +1,28 @@
 // @flow
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
 
 import CONSTANTS from '../constants';
 import Base from './_Base';
 import WizardNav from './WizardNav';
 import FileExplorer from './FileExplorer';
-import { defaultServiceContainerName } from '../utils/app';
+import * as utils from '../utils/app';
 
 export default class CreateServiceContainer extends Component {
   constructor() {
     super();
     this.rootFolderName = '_public';
     this.state = {
+      ...CONSTANTS.UI.POPUP_STATES,
       serviceContainerPathEditMode: false,
       serviceContainerPath: null,
-      rootPath: null,
-      showPopup: false,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: null
+      rootPath: null
     };
   }
 
   componentWillMount() {
     const publicName = this.props.match.params.publicName;
-    const containerPath = defaultServiceContainerName(this.props.match.params.serviceName);
+    const containerPath = utils.defaultServiceContainerName(this.props.match.params.serviceName);
     this.rootFolderName = `${this.rootFolderName}/${publicName}`;
     const fullContainerPath = `${this.rootFolderName}/${containerPath}`;
     this.setState({
@@ -37,13 +34,26 @@ export default class CreateServiceContainer extends Component {
   }
 
   componentDidUpdate() {
-    if (this.props.publishing && !this.state.showPopup) {
-      return this.showLoader('Publishing website');
-    } else if (this.props.published) {
-      this.hideLoader();
-      return this.props.history.push('/publicNames');
-    } else if (this.props.publishError) {
-      this.showError(this.props.publishError);
+    if (!this.state.showPopup) { // on no popup
+      // set loading
+      if (this.props.publishing) { // on publishing
+        return utils.setLoading(this, 'Publishing website');
+      } else if (this.props.uploading) {
+        return utils.setLoading(this, 'Uploading files');
+      } else if (this.props.error) { // on error
+        return utils.setError(this, this.props.error);
+      }
+    } else { // on popup
+      if (this.props.publishing) {
+        return;
+      }
+
+      if (this.props.published) { // on published
+        utils.unsetLoading(this);
+        return this.props.history.push('/publicNames');
+      } else if (!this.props.uploading && this.props.uploadStatus) { // on uploading done
+        return utils.unsetLoading(this);
+      }
     }
   }
 
@@ -115,38 +125,11 @@ export default class CreateServiceContainer extends Component {
     );
   };
 
-  showLoader(desc) {
-    this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: desc
-    });
-  }
-
-  hideLoader() {
-    if (this.state.popupType !== CONSTANTS.UI.POPUP_TYPES.LOADING) {
-      return;
-    }
-    this.setState({
-      showPopup: false
-    });
-  }
-
-  showError(err) {
-    this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: err
-    });
-  }
-
   popupOkCb() {
     // reset file manager state
     this.props.resetFileManager();
 
-    this.setState({
-      showPopup: false
-    });
+    this.setState(utils.resetPopup());
   }
 
   render() {

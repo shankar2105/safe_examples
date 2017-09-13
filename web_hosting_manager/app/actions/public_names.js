@@ -35,17 +35,6 @@ export const getServiceContainers = () => {
   };
 };
 
-export const fetchServices = () => {
-  return (dispatch) => {
-    dispatch({
-      type: ACTION_TYPES.FETCH_SERVICES,
-      payload: api.fetchPublicNames()
-        .then(() => api.fetchServices())
-        .then((publicNames) => dispatch(setPublicNames(publicNames)))
-    });
-  };
-};
-
 export const reset = () => ({
   type: ACTION_TYPES.REST_PUBLIC_NAMES
 });

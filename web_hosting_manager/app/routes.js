@@ -10,6 +10,7 @@ import ChooseExistingContainerPage from './containers/ChooseExistingContainerPag
 import CreateServiceContainerPage from './containers/CreateServiceContainerPage';
 import CreateServicePage from './containers/CreateServicePage';
 import WithTemplatePage from './containers/WithTemplatePage';
+import ManageFilesPage from './containers/ManageFilesPage';
 
 // static components
 import NewWebSitePage from './components/NewWebSite';
@@ -18,6 +19,7 @@ import NewWebSitePage from './components/NewWebSite';
 export default () => (
   <App>
     <Switch>
+      <Route path="/manageFiles/:containerPath" component={ManageFilesPage} />
       <Route path="/withTemplate/:publicName/:serviceName" component={WithTemplatePage} />
       <Route path="/createServiceContainer/:publicName/:serviceName" component={CreateServiceContainerPage} />
       <Route path="/createService/:option/:publicName" component={CreateServicePage} />

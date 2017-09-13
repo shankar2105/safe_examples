@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import CONSTANTS from '../constants';
-import Error from './_Error';
+import ErrorEle from './_Error';
 
 export default class Popup extends Component {
   constructor() {
@@ -25,10 +25,10 @@ export default class Popup extends Component {
     return (
       <div className="popup-error">
         <div className="icon"></div>
-        {Error(<div className="desc">{this.props.desc}</div>)}
+        {ErrorEle(<div className="desc">{this.props.desc}</div>)}
         <div className="opt">
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="btn flat primary"
             onClick={(e) => {
               e.preventDefault();
@@ -47,8 +47,8 @@ export default class Popup extends Component {
         <p className="desc">{this.props.desc} cannot be modified. Will require authorisation to modify the contents in the container. Send authorisation request now?</p>
         <div className="opts">
           <div className="opt">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn flat"
               onClick={(e) => {
                 e.preventDefault();
@@ -57,8 +57,8 @@ export default class Popup extends Component {
             >Close</button>
           </div>
           <div className="opt">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn flat primary"
               onClick={(e) => {
                 e.preventDefault();

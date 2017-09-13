@@ -5,11 +5,10 @@ const initState = {
   publicNames: {},
   serviceContainers: [],
   creatingPublicName: false,
-  createdPublicName: false,
-  error: null,
   fetchingServiceContainers: false,
   fetchedServiceContainers: false,
-  fetchServiceContainersError: null
+  fetchServiceContainersError: null,
+  error: null
 };
 
 export default function publicNamesList(state = initState, action) {
@@ -18,31 +17,30 @@ export default function publicNamesList(state = initState, action) {
       return {
         ...state,
         publicNames: lodash.cloneDeep(action.data)
-      }
+      };
     case actionTypes.SET_SERVICE_CONTAINERS:
       return {
         ...state,
         serviceContainers: lodash.cloneDeep(action.data)
-      }
+      };
+
     case `${actionTypes.CREATE_PUBLIC_NAME}_PENDING`:
       return {
         ...state,
-        creatingPublicName: true,
-        createdPublicName: false
+        creatingPublicName: true
       };
     case `${actionTypes.CREATE_PUBLIC_NAME}_FULFILLED`:
       return {
         ...state,
-        creatingPublicName: false,
-        createdPublicName: true
+        creatingPublicName: false
       };
     case `${actionTypes.CREATE_PUBLIC_NAME}_REJECTED`:
       return {
         ...state,
         creatingPublicName: false,
-        createdPublicName: false,
         error: action.payload.message
       };
+
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_PENDING`:
       return {
         ...state,

@@ -1,17 +1,17 @@
 // @flow
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 import CONSTANTS from '../constants';
 import Base from './_Base';
+import * as utils from '../utils/app';
 
 export default class PublicNames extends Component {
   constructor() {
     super();
     this.state = {
-      showPopup: false,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: null
+      ...CONSTANTS.UI.POPUP_STATES
     };
   }
 
@@ -19,21 +19,29 @@ export default class PublicNames extends Component {
     this.props.fetchServices();
   }
 
-  showErrorPopup(err) {
-    const errMsg = err instanceof Error ? err.message : err;
-    this.setState({
-      showPopup: true,
-      popupDesc: errMsg
-    });
+  componentDidUpdate() {
+    if (!this.state.showPopup) { // on no popup
+      // show popup on
+      if (this.props.deletingService) { // on deleting service
+        return utils.setLoading(this, 'Deleting service');
+      } else if (this.props.fetchingService) { // on fetching service
+        return utils.setLoading(this, 'Fetching service');
+      } else if (this.props.error) { // show error popup
+        return utils.setError(this, this.props.error);
+      }
+    } else { // on popup set
+      // on service deleted or services fetched hide popup
+      if (!(this.props.deletingService || this.props.fetchingService)) {
+        return utils.unsetLoading(this);
+      }
+    }
   }
 
   popupOkCb() {
     // reset authorisation error
     this.props.reset();
 
-    this.setState({
-      showPopup: false
-    });
+    this.setState(utils.resetPopup());
   }
 
   getNoPublicNamesContainer() {
@@ -42,22 +50,31 @@ export default class PublicNames extends Component {
         <div className="no-public-id-cntr-b">
           <h3>Looks like you dont have a Public ID yet!</h3>
           <h4>Create one now to start publishing websites on the SAFE Network.</h4>
-          <span className="new-public-id-arrow"></span>
+          <span className="new-public-id-arrow">{''}</span>
         </div>
       </div>
     );
   }
 
-  getServiceItem(service, path) {
+  getServiceItem(publicName, service, path, index) {
     return (
-      <div className="i-cnt-ls-i">
+      <div className="i-cnt-ls-i" key={index}>
         <div className="i-cnt-ls-i-b">
-          <h3 className="name"><a href="#">{service}</a></h3>
-          <h3 className="location"><a href="#">{path}</a></h3>
+          <h3 className="name"><a href={`safe://${publicName}.${service}`}>{service}</a></h3>
+          <h3 className="location"><Link to={`manageFiles/${encodeURIComponent(path)}`}>{path}</Link></h3>
         </div>
         <div className="opt">
-          <div className="opt-i"><button type="button" className="delete-btn"></button></div>
-          <div className="opt-i"><button type="button" className="remap-btn"></button></div>
+          <div className="opt-i">
+            <button
+              type="button"
+              className="delete-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                this.props.deleteService(publicName, service);
+              }}
+            >{''}</button>
+          </div>
+          <div className="opt-i"><button type="button" className="remap-btn">{''}</button></div>
         </div>
       </div>
     );
@@ -98,8 +115,8 @@ export default class PublicNames extends Component {
           </div>
           <div className="i-cnt-ls">
             {
-              Object.keys(services).map((service) => {
-                return this.getServiceItem(service, services[service]);
+              Object.keys(services).map((service, i) => {
+                return this.getServiceItem(publicName, service, services[service], i);
               })
             }
           </div>
