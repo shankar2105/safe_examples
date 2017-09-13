@@ -91,3 +91,13 @@ export const publishTemplate = (publicId, serviceName, containerPath, files) => 
     uploadFile();
   };
 };
+
+export const deleteFileOrDir = (containerPath, name) => {
+  return (dispatch) => {
+    dispatch({
+      type: ACTION_TYPES.DELETE_FILE_OR_FOLDER,
+      payload: api.deleteFileOrDir(`${containerPath}/${name}`)
+        .then(() => dispatch(getContainerInfo(containerPath)))
+    });
+  };
+};

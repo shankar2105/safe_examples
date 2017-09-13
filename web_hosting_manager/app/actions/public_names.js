@@ -35,9 +35,9 @@ export const getServiceContainers = () => {
   };
 };
 
-export const reset = () => ({
-  type: ACTION_TYPES.REST_PUBLIC_NAMES
-});
+// export const reset = () => ({
+//   type: ACTION_TYPES.REST_PUBLIC_NAMES
+// });
 
 export const resetServiceContainers = () => ({
   type: ACTION_TYPES.RESET_SERVICE_CONTAINERS

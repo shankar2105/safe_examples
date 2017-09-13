@@ -19,29 +19,10 @@ export default class PublicNames extends Component {
     this.props.fetchServices();
   }
 
-  componentDidUpdate() {
-    if (!this.state.showPopup) { // on no popup
-      // show popup on
-      if (this.props.deletingService) { // on deleting service
-        return utils.setLoading(this, 'Deleting service');
-      } else if (this.props.fetchingService) { // on fetching service
-        return utils.setLoading(this, 'Fetching service');
-      } else if (this.props.error) { // show error popup
-        return utils.setError(this, this.props.error);
-      }
-    } else { // on popup set
-      // on service deleted or services fetched hide popup
-      if (!(this.props.deletingService || this.props.fetchingService)) {
-        return utils.unsetLoading(this);
-      }
-    }
-  }
-
   popupOkCb() {
     // reset authorisation error
     this.props.reset();
-
-    this.setState(utils.resetPopup());
+    // this.setState(utils.resetPopup());
   }
 
   getNoPublicNamesContainer() {
@@ -143,13 +124,14 @@ export default class PublicNames extends Component {
     const { publicNames } = this.props;
     const hasPublicNames = (Object.keys(publicNames).length !== 0);
     const container =  hasPublicNames ? this.getPublicNameList(publicNames) : this.getNoPublicNamesContainer();
+
     return (
       <Base
         scrollableContainer={!hasPublicNames}
         showHeaderOpts
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         {container}

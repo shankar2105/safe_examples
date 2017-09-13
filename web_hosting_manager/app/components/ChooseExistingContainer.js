@@ -6,14 +6,13 @@ import classNames from 'classnames';
 import CONSTANTS from '../constants';
 import Base from './_Base';
 import WizardNav from './WizardNav';
+import * as utils from '../utils/app';
 
 export default class ChooseExistingContainer extends Component {
   constructor() {
     super();
     this.state = {
-      showPopup: false,
-      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: null,
+      // ...CONSTANTS.UI.POPUP_STATES,
       selectedContainer: null,
       selectedContainerExpanded: false
     };
@@ -21,82 +20,18 @@ export default class ChooseExistingContainer extends Component {
   }
 
   componentWillMount() {
-    const {serviceContainers} = this.props;
-
-    if (serviceContainers.length !== 0) {
-      this.setState({
-        selectedContainer: serviceContainers[0]
-      });
-    }
+    this.props.getServiceContainers();
   }
 
   componentDidUpdate() {
-    // hide loader if service containers fetched
-    if (!this.props.fetching && this.props.fetched && this.state.showPopup) {
-      this.hideLoading();
-    } else if (!this.props.fetching && this.props.error) { // show error message popup on fetching containers failed
-      if (this.state.showPopup) {
-        this.hideLoading();
-        return;
-      }
-      this.showErrorPopup(this.props.error);
-    }
-
-    // while publishing website
-    if (this.props.publishing && !this.state.showPopup) {
-      return this.showLoader('Publishing website');
-    } else if (this.props.published) {
-      this.hideLoading();
+    if (this.props.published && !this.props.processing) {
       return this.props.history.push('/publicNames');
-    } else if (this.props.publishError) {
-      this.showErrorPopup(this.props.publishError);
     }
-  }
-
-  showErrorPopup(err) {
-    const errMsg = err instanceof Error ? err.message : err;
-    this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: errMsg
-    });
-  }
-
-  showLoader(desc) {
-    this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: desc
-    });
-  }
-
-  hideLoading() {
-    if (this.state.popupType !== CONSTANTS.UI.POPUP_TYPES.LOADING) {
-      return;
-    }
-    this.setState({
-      showPopup: false,
-      popupType: null,
-      popupDesc: null
-    });
   }
 
   reloadContainers(e) {
     e.preventDefault();
-    this.setState({
-      showPopup: true,
-      popupDesc: 'Fetching service containers'
-    });
     this.props.getServiceContainers();
-  }
-
-  popupOkCb() {
-    // reset initialisation error
-    this.props.resetServiceContainers();
-
-    this.setState({
-      showPopup: false
-    });
   }
 
   handleContainersSelect(cont) {
@@ -123,7 +58,7 @@ export default class ChooseExistingContainer extends Component {
           this.setState({
             selectedContainerExpanded: !this.state.selectedContainerExpanded
           });
-        }}>{this.state.selectedContainer}</div>
+        }}>{this.state.selectedContainer || this.props.serviceContainers[0]}</div>
         <ul>
           {
             serviceContainers.map((cont, i) => {
@@ -142,6 +77,14 @@ export default class ChooseExistingContainer extends Component {
     );
   }
 
+  popupOkCb() {
+    this.props.reset();
+  }
+
+  componentWillUnmount() {
+    this.props.reset();
+  }
+
   render() {
     const { params } = this.props.match;
 
@@ -150,9 +93,9 @@ export default class ChooseExistingContainer extends Component {
 
     return (
       <Base
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         <div>

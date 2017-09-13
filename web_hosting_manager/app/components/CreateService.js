@@ -9,15 +9,6 @@ import WizardNav from './WizardNav';
 import * as utils from '../utils/app';
 
 export default class CreateService extends Component {
-  constructor() {
-    super();
-    this.state = {
-      showPopup: false,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: null
-    };
-  }
-
   componentDidMount() {
     if (this.serviceName) {
       this.serviceName.focus();
@@ -30,32 +21,49 @@ export default class CreateService extends Component {
     const option = params.option;
     const serviceName = this.serviceName.value.trim();
 
-    if (!this.state.showPopup) { // on no popup
-      if (this.props.checkingService) { // on checking service exists
-        return utils.setLoading(this, 'Checking service exists');
-      } else if (this.props.error) { // on error
-        return utils.setError(this, this.props.error);
+    // if (!this.state.showPopup) { // on no popup
+    //   if (this.props.checkingService) { // on checking service exists
+    //     return utils.setLoading(this, 'Checking service exists');
+    //   } else if (this.props.error) { // on error
+    //     return utils.setError(this, this.props.error);
+    //   }
+    // } else { // on popup
+    //   if (!this.props.checkingService) { // on checking service exists finished
+    //     utils.unsetLoading(this); // unset loading
+    //
+    //     // show error if service name exists
+    //     if (this.props.serviceExists) {
+    //       return utils.setError(this, 'Service already exists');
+    //     }
+    //
+    //     // if service not exist navigate, go next step
+    //     switch(option) {
+    //       case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.CHOOSE_EXISTING:
+    //         return this.props.history.push(`/chooseExistingContainer/${publicName}/${serviceName}`);
+    //       case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.FROM_SCRATCH:
+    //         return this.props.history.push(`/createServiceContainer/${publicName}/${serviceName}`);
+    //       case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.TEMPLATE:
+    //         return this.props.history.push(`/withTemplate/${publicName}/${serviceName}`);
+    //       default:
+    //         console.error('Unknown option provided for creating service');
+    //     }
+    //   }
+    // }
+
+    if (this.props.checkedServiceExists) {
+      if (this.props.serviceExists) {
+        return;
       }
-    } else { // on popup
-      if (!this.props.checkingService) { // on checking service exists finished
-        utils.unsetLoading(this); // unset loading
-
-        // show error if service name exists
-        if (this.props.serviceExists) {
-          return utils.setError(this, 'Service already exists');
-        }
-
-        // if service not exist navigate, go next step
-        switch(option) {
-          case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.CHOOSE_EXISTING:
-            return this.props.history.push(`/chooseExistingContainer/${publicName}/${serviceName}`);
-          case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.FROM_SCRATCH:
-            return this.props.history.push(`/createServiceContainer/${publicName}/${serviceName}`);
-          case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.TEMPLATE:
-            return this.props.history.push(`/withTemplate/${publicName}/${serviceName}`);
-          default:
-            console.error('Unknown option provided for creating service');
-        }
+      // if service not exist navigate, go next step
+      switch(option) {
+        case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.CHOOSE_EXISTING:
+          return this.props.history.push(`/chooseExistingContainer/${publicName}/${serviceName}`);
+        case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.FROM_SCRATCH:
+          return this.props.history.push(`/createServiceContainer/${publicName}/${serviceName}`);
+        case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.TEMPLATE:
+          return this.props.history.push(`/withTemplate/${publicName}/${serviceName}`);
+        default:
+          console.error('Unknown option provided for creating service');
       }
     }
   }
@@ -71,23 +79,28 @@ export default class CreateService extends Component {
     }
 
     if (!utils.domainCheck(serviceName)) {
-      return this.showError('Service name must contain only lowercase alphanumeric characters or - and should contain a min of 3 characters and a max of 62 characters');
+      return;
+      // return this.showError('Service name must contain only lowercase alphanumeric characters or - and should contain a min of 3 characters and a max of 62 characters');
     }
 
     this.props.checkServiceExists(publicName, serviceName);
   }
 
   popupOkCb() {
-    this.setState(utils.resetPopup());
+    this.props.reset();
+  }
+
+  componentWillUnmount() {
+    this.props.reset();
   }
 
   render() {
     const publicName = this.props.match.params.publicName;
     return (
       <Base
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         <div>

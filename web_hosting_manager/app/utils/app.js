@@ -55,3 +55,13 @@ export const setError = (self, err) => {
     popupDesc: errMsg
   });
 };
+
+export const getPopupType = (data) => {
+  if (typeof data === 'boolean') {
+    return CONSTANTS.UI.POPUP_TYPES.LOADING;
+  } else if (typeof data === 'string') {
+    return CONSTANTS.UI.POPUP_TYPES.ERROR;
+  } else {
+    return CONSTANTS.UI.POPUP_TYPES.AUTH_REQ;
+  }
+};

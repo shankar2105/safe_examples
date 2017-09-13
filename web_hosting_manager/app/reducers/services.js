@@ -1,11 +1,11 @@
 import ACTION_TYPES from '../actions/action_types';
 
+import CONSTANTS from '../constants';
+
 const initState = {
-  checkingService: false,
-  fetchingService: false,
-  deletingService: false,
+  checkedServiceExists: false,
   serviceExists: false,
-  error: null
+  ...CONSTANTS.UI.COMMON_STATE
 };
 
 export default function services(state = initState, action) {
@@ -13,53 +13,66 @@ export default function services(state = initState, action) {
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_PENDING`:
       return {
         ...state,
-        checkingService: true
+        processing: true,
+        processDesc: 'Checking service exists'
       };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_FULFILLED`:
+      const serviceExists = !!action.payload;
       return {
         ...state,
-        checkingService: false,
-        serviceExists: !!action.payload
+        processing: false,
+        serviceExists,
+        checkedServiceExists: true,
+        error: serviceExists ? 'Service already exists' : null
       };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_REJECTED`:
       return {
         ...state,
-        checkingService: false,
+        processing: false,
         error: action.payload.message
       };
 
     case `${ACTION_TYPES.DELETE_SERVICE}_PENDING`:
       return {
         ...state,
-        deletingService: true
+        processing: true,
+        processDesc: 'Deleting service'
       };
     case `${ACTION_TYPES.DELETE_SERVICE}_FULFILLED`:
       return {
         ...state,
-        deletingService: false
+        processing: false
       };
     case `${ACTION_TYPES.DELETE_SERVICE}_REJECTED`:
       return {
         ...state,
-        deletingService: false,
+        processing: false,
         error: action.payload.message
       };
 
     case `${ACTION_TYPES.FETCH_SERVICES}_PENDING`:
       return {
         ...state,
-        fetchingService: true
+        processing: true,
+        processDesc: 'Fetching service'
       };
     case `${ACTION_TYPES.FETCH_SERVICES}_FULFILLED`:
       return {
         ...state,
-        fetchingService: false
+        processing: false
       };
     case `${ACTION_TYPES.FETCH_SERVICES}_REJECTED`:
       return {
         ...state,
-        deletingService: false,
+        processing: false,
         error: action.payload.message
+      };
+    case ACTION_TYPES.RESET:
+      return {
+        ...state,
+        ...CONSTANTS.UI.COMMON_STATE,
+        checkedServiceExists: false,
+        serviceExists: false
       };
     default:
       return state;

@@ -6,14 +6,12 @@ import classNames from 'classnames';
 import Base from './_Base';
 import ErrorComp from './_Error';
 import * as utils from '../utils/app';
-import CONSTANTS from '../constants';
 
 export default class NewPublicName extends Component {
   constructor() {
     super();
     this.state = {
-      error: null,
-      ...CONSTANTS.UI.POPUP_STATES
+      error: null
     };
   }
 
@@ -24,16 +22,8 @@ export default class NewPublicName extends Component {
   }
 
   componentDidUpdate() {
-    if (!this.state.showPopup) {
-      // show loader on creating public name
-      if (this.props.creatingPublicName) {
-        return utils.setLoading(this, 'Creating public name');
-      }
-    } else {
-      if (!this.props.creatingPublicName) {
-        utils.unsetLoading(this);
-        return this.props.history.replace('publicNames');
-      }
+    if (this.props.createdPublicName && !this.props.processing) {
+      return this.props.history.replace('publicNames');
     }
   }
 
@@ -45,29 +35,23 @@ export default class NewPublicName extends Component {
       return this.setState({ error: 'Public name must contain only lowercase alphanumeric characters or - and should contain a min of 3 characters and a max of 62 characters' });
     }
 
-    this.setState({
-      error: null,
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: 'Creating new Public ID'
-    });
     this.props.createPublicName(newPublicId);
   }
 
   popupOkCb() {
-    this.setState(utils.resetPopup());
+    this.props.reset();
+  }
+
+  componentWillUnmount() {
+    this.props.reset();
   }
 
   render() {
-    const { error } = this.props;
-
-    const errorMsg = this.state.error || error;
-
     return (
       <Base
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         <div className="card">
@@ -87,7 +71,7 @@ export default class NewPublicName extends Component {
                     />
                   </div>
                   {
-                    errorMsg ?  ErrorComp(<span className="err-msg">{errorMsg}</span>) : null
+                    this.state.error ?  ErrorComp(<span className="err-msg">{this.state.error}</span>) : null
                   }
                 </div>
               </div>

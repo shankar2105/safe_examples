@@ -1,14 +1,13 @@
 import lodash from 'lodash';
 import actionTypes from '../actions/action_types';
 
+import CONSTANTS from '../constants';
+
 const initState = {
   publicNames: {},
   serviceContainers: [],
-  creatingPublicName: false,
-  fetchingServiceContainers: false,
-  fetchedServiceContainers: false,
-  fetchServiceContainersError: null,
-  error: null
+  createdPublicName: false,
+  ...CONSTANTS.UI.COMMON_STATE
 };
 
 export default function publicNamesList(state = initState, action) {
@@ -27,45 +26,46 @@ export default function publicNamesList(state = initState, action) {
     case `${actionTypes.CREATE_PUBLIC_NAME}_PENDING`:
       return {
         ...state,
-        creatingPublicName: true
+        processing: true,
+        processDesc: 'Creating public name'
       };
     case `${actionTypes.CREATE_PUBLIC_NAME}_FULFILLED`:
       return {
         ...state,
-        creatingPublicName: false
+        processing: false,
+        createdPublicName: true,
+        processDesc: null
       };
     case `${actionTypes.CREATE_PUBLIC_NAME}_REJECTED`:
       return {
         ...state,
-        creatingPublicName: false,
+        processing: false,
         error: action.payload.message
       };
 
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_PENDING`:
       return {
         ...state,
-        fetchingServiceContainers: true,
-        fetchedServiceContainers: false
+        processing: true,
+        processDesc: 'Fetching service containers'
       };
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_FULFILLED`:
       return {
         ...state,
-        fetchingServiceContainers: false,
-        fetchedServiceContainers: true
+        processing: false,
+        processDesc: null
       };
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_REJECTED`:
       return {
         ...state,
-        fetchingServiceContainers: false,
-        fetchedServiceContainers: false,
-        fetchServiceContainersError: action.payload.message
+        processing: false,
+        error: action.payload.message
       };
-    case actionTypes.RESET_SERVICE_CONTAINERS:
+    case actionTypes.RESET:
       return {
         ...state,
-        etchingServiceContainers: false,
-        fetchedServiceContainers: false,
-        fetchServiceContainersError: null
+        ...CONSTANTS.UI.COMMON_STATE,
+        createdPublicName: false
       };
     default:
       return state;

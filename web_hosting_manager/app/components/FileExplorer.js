@@ -15,13 +15,15 @@ export default class FileExplorer extends Component {
       currentPath: null
     };
     this.getFolderEle = this.getFolderEle.bind(this);
-  }
-
-  componentDidMount() {
+    this.handleDelete = this.handleDelete.bind(this);
   }
 
   getCurrentPath() {
     return this.state.currentPath || this.props.rootPath
+  }
+
+  handleDelete(name) {
+    this.props.deleteFileOrDir(this.getCurrentPath(), name);
   }
 
   chooseUploadMenu(onlyFile) {
@@ -90,6 +92,7 @@ export default class FileExplorer extends Component {
             className="delete-btn"
             onClick={(e) => {
               e.preventDefault();
+              this.handleDelete(name);
             }}
           >{''}</button>
         </div>
@@ -98,7 +101,6 @@ export default class FileExplorer extends Component {
   }
 
   getFolderEle(name, key) {
-    console.log('before', this.state)
     return (
       <div className="i dir" key={key} onDoubleClick={(e) => {
         e.preventDefault();
@@ -119,6 +121,7 @@ export default class FileExplorer extends Component {
             className="delete-btn"
             onClick={(e) => {
               e.preventDefault();
+              this.handleDelete(name);
             }}
           >{''}</button>
         </div>
@@ -127,8 +130,6 @@ export default class FileExplorer extends Component {
   }
 
   render() {
-    console.log('rootpath', this.props.rootPath);
-
     return (
       <div className="file-explorer">
         <div className="b">

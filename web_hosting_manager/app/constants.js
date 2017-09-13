@@ -73,6 +73,11 @@ const CONSTANTS = {
       ERROR: 'ERROR',
       AUTH_REQ: 'AUTH_REQ'
     },
+    COMMON_STATE: {
+      error: null,
+      processing: false,
+      processDesc: null
+    },
     POPUP_STATES: {
       showPopup: false,
       popupType: null,

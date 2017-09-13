@@ -12,7 +12,6 @@ export default class WithTemplate extends Component {
   constructor() {
     super();
     this.state = {
-      ...CONSTANTS.UI.POPUP_STATES,
       editTitle: false,
       editDesc: false,
       title: 'Safe Network sample site',
@@ -21,27 +20,8 @@ export default class WithTemplate extends Component {
   }
 
   componentDidUpdate() {
-    if (!this.state.showPopup) { // on no popup
-      // set loading
-      if (this.props.uploading) { // on files upload
-        return utils.setLoading(this, 'Uploading files');
-      } else if (this.props.publishing) { // on publishing service
-        return utils.setLoading(this, 'Publishing files');
-      } else if (this.props.error) { // on error
-        return utils.setError(this, this.props.error);
-      }
-    } else {
-      if (this.props.publishing) {
-        return;
-      }
-      // on popup
-      if (this.props.published) {
-        utils.unsetLoading(this);
-        console.log('this.props', this.props.history)
-        return this.props.history.push('/publicNames');
-      } else if (!this.props.uploading) {
-        return utils.unsetLoading(this);
-      }
+    if (this.props.published && !this.props.processing) {
+      return this.props.history.push('/publicNames');
     }
   }
 
@@ -67,12 +47,17 @@ export default class WithTemplate extends Component {
       const containerPath = `_public/${publicName}/${utils.defaultServiceContainerName(serviceName)}`;
       this.props.publishTemplate(publicName, serviceName, containerPath, filesToUpload);
     } catch (e) {
-      console.error('err', e)
+      console.error('err', e);
+      // return utils.setError(this, e.message);
     }
   }
 
   popupOkCb() {
-    this.setState(utils.resetPopup());
+    this.props.reset();
+  }
+
+  componentWillUnmount() {
+    this.props.reset();
   }
 
   render() {
@@ -82,9 +67,9 @@ export default class WithTemplate extends Component {
 
     return (
       <Base
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         <div>

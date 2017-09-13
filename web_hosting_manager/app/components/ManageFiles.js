@@ -1,50 +1,14 @@
 // @flow
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
 
-import CONSTANTS from '../constants';
 import WizardNav from './WizardNav';
 import FileExplorer from './FileExplorer';
 import Base from './_Base';
 
 export default class ManageFiles extends Component {
-  constructor() {
-    super();
-    this.state = {
-      showPopup: false,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: null
-    };
-  }
-
   componentDidMount() {
     this.props.getContainerInfo(decodeURIComponent(this.props.match.params.containerPath));
-  }
-
-  showLoader(desc) {
-    this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-      popupDesc: desc
-    });
-  }
-
-  hideLoader() {
-    if (this.state.popupType !== CONSTANTS.UI.POPUP_TYPES.LOADING) {
-      return;
-    }
-    this.setState({
-      showPopup: false
-    });
-  }
-
-  showError(desc) {
-    return this.setState({
-      showPopup: true,
-      popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: desc
-    });
   }
 
   popupOkCb() {
@@ -53,13 +17,21 @@ export default class ManageFiles extends Component {
     });
   }
 
+  popupOkCb() {
+    this.props.reset();
+  }
+
+  componentWillUnmount() {
+    this.props.reset();
+  }
+
   render() {
     const containerPath = decodeURIComponent(this.props.match.params.containerPath);
     return (
       <Base
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         <div>

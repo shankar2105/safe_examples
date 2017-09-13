@@ -34,26 +34,8 @@ export default class CreateServiceContainer extends Component {
   }
 
   componentDidUpdate() {
-    if (!this.state.showPopup) { // on no popup
-      // set loading
-      if (this.props.publishing) { // on publishing
-        return utils.setLoading(this, 'Publishing website');
-      } else if (this.props.uploading) {
-        return utils.setLoading(this, 'Uploading files');
-      } else if (this.props.error) { // on error
-        return utils.setError(this, this.props.error);
-      }
-    } else { // on popup
-      if (this.props.publishing) {
-        return;
-      }
-
-      if (this.props.published) { // on published
-        utils.unsetLoading(this);
-        return this.props.history.push('/publicNames');
-      } else if (!this.props.uploading && this.props.uploadStatus) { // on uploading done
-        return utils.unsetLoading(this);
-      }
+    if (this.props.published && !this.props.processing) {
+      return this.props.history.push('/publicNames');
     }
   }
 
@@ -126,10 +108,11 @@ export default class CreateServiceContainer extends Component {
   };
 
   popupOkCb() {
-    // reset file manager state
-    this.props.resetFileManager();
+    this.props.reset();
+  }
 
-    this.setState(utils.resetPopup());
+  componentWillUnmount() {
+    this.props.reset();
   }
 
   render() {
@@ -139,9 +122,9 @@ export default class CreateServiceContainer extends Component {
     const serviceName = params.serviceName;
     return (
       <Base
-        showPopup={this.state.showPopup}
-        popupType={this.state.popupType}
-        popupDesc={this.state.popupDesc}
+        processing={this.props.processing}
+        error={this.props.error}
+        processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
       >
         <div>
