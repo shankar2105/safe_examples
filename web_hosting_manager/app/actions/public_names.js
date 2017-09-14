@@ -3,6 +3,10 @@
 import ACTION_TYPES from './action_types';
 import api from '../lib/api';
 
+export const canAccessPublicName = (publicName) => ({
+  type: ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME,
+  payload: api.checkPublicNameAccessible(publicName)
+});
 
 export const setPublicNames = (publicNames) => ({
   type: ACTION_TYPES.SET_PUBLIC_NAMES,

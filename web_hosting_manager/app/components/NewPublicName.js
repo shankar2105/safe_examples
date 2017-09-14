@@ -67,6 +67,11 @@ export default class NewPublicName extends Component {
                       type="text"
                       name="new-public-id"
                       placeholder="Enter Public ID"
+                      onKeyPress={(e) => {
+                        if (e.charCode === 13) {
+                          this.createPublicId(e);
+                        }
+                      }}
                       ref={(c) => {this.newPublicId = c;}}
                     />
                   </div>

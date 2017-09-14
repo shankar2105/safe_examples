@@ -228,6 +228,31 @@
       overflow: hidden
       width: 155px
       text-overflow: ellipsis
+  .err-msg
+    display: inline-block
+    margin: 0 15px
+    padding-top: 15px
+    padding-left: 30px
+    font-size: 14px
+    color: err-red
+    position: relative
+    line-height: 20px
+
+    &:before
+      content: ""
+      width: 20px
+      height: 20px
+      position: absolute
+      top: 15px
+      left: 0
+      background-image: url(url-error-icon)
+      background-position: center
+      background-repeat: no-repeat
+      background-size: contain
+      display: block
+    a
+      color: inherit
+      text-decoration: underline
 
 .upload-file-cntr
   .b

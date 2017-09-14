@@ -46,5 +46,6 @@ Base.propTypes = {
   showAuthReq: PropTypes.bool,
   processing: PropTypes.bool,
   error: PropTypes.string,
-  processDesc: PropTypes.string
+  processDesc: PropTypes.string,
+  popupCancelCb: PropTypes.func
 };

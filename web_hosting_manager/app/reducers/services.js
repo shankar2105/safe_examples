@@ -5,11 +5,34 @@ import CONSTANTS from '../constants';
 const initState = {
   checkedServiceExists: false,
   serviceExists: false,
+  sendAuthReq: false,
+  authorisingMD: false,
   ...CONSTANTS.UI.COMMON_STATE
 };
 
 export default function services(state = initState, action) {
   switch (action.type) {
+
+    case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_PENDING`:
+      return {
+        ...state,
+        processing: true,
+        processDesc: 'Checking for public name access'
+      };
+    case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_FULFILLED`:
+      return {
+        ...state,
+        processing: false,
+        processDesc: null,
+        sendAuthReq: false
+      };
+    case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_REJECTED`:
+      return {
+        ...state,
+        processing: false,
+        processDesc: null,
+        sendAuthReq: true
+      };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_PENDING`:
       return {
         ...state,
@@ -67,6 +90,32 @@ export default function services(state = initState, action) {
         processing: false,
         error: action.payload.message
       };
+    case ACTION_TYPES.SEND_MD_REQ:
+      return {
+        sendAuthReq: false,
+        authorisingMD: true,
+        processing: true,
+        processDesc: 'Waiting for Mutable Data authorisation'
+      };
+    case `${ACTION_TYPES.MD_AUTHORISED}_FULFILLED`:
+      return {
+        authorisingMD: false,
+        processing: false,
+        processDesc: null
+      };
+    case `${ACTION_TYPES.MD_AUTHORISED}_REJECTED`:
+      return {
+        authorisingMD: false,
+        processing: false,
+        processDesc: null,
+        error: action.payload.message
+      };
+    case ACTION_TYPES.CANCEL_MD_REQ:
+      return {
+        ...state,
+        sendAuthReq: false
+      };
+
     case ACTION_TYPES.RESET:
       return {
         ...state,

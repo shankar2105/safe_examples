@@ -6,9 +6,20 @@ import classNames from 'classnames';
 import CONSTANTS from '../constants';
 import Base from './_Base';
 import WizardNav from './WizardNav';
+import ErrorComp from './_Error';
 import * as utils from '../utils/app';
 
 export default class CreateService extends Component {
+  constructor() {
+    super();
+    this.state = {
+      error: null
+    };
+  }
+  componentWillMount() {
+    this.props.canAccessPublicName(this.props.match.params.publicName);
+  }
+
   componentDidMount() {
     if (this.serviceName) {
       this.serviceName.focus();
@@ -20,35 +31,6 @@ export default class CreateService extends Component {
     const publicName = params.publicName;
     const option = params.option;
     const serviceName = this.serviceName.value.trim();
-
-    // if (!this.state.showPopup) { // on no popup
-    //   if (this.props.checkingService) { // on checking service exists
-    //     return utils.setLoading(this, 'Checking service exists');
-    //   } else if (this.props.error) { // on error
-    //     return utils.setError(this, this.props.error);
-    //   }
-    // } else { // on popup
-    //   if (!this.props.checkingService) { // on checking service exists finished
-    //     utils.unsetLoading(this); // unset loading
-    //
-    //     // show error if service name exists
-    //     if (this.props.serviceExists) {
-    //       return utils.setError(this, 'Service already exists');
-    //     }
-    //
-    //     // if service not exist navigate, go next step
-    //     switch(option) {
-    //       case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.CHOOSE_EXISTING:
-    //         return this.props.history.push(`/chooseExistingContainer/${publicName}/${serviceName}`);
-    //       case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.FROM_SCRATCH:
-    //         return this.props.history.push(`/createServiceContainer/${publicName}/${serviceName}`);
-    //       case CONSTANTS.UI.NEW_WEBSITE_OPTIONS.TEMPLATE:
-    //         return this.props.history.push(`/withTemplate/${publicName}/${serviceName}`);
-    //       default:
-    //         console.error('Unknown option provided for creating service');
-    //     }
-    //   }
-    // }
 
     if (this.props.checkedServiceExists) {
       if (this.props.serviceExists) {
@@ -79,16 +61,32 @@ export default class CreateService extends Component {
     }
 
     if (!utils.domainCheck(serviceName)) {
-      return;
-      // return this.showError('Service name must contain only lowercase alphanumeric characters or - and should contain a min of 3 characters and a max of 62 characters');
+      return this.setState({
+        error: 'Service name must contain only lowercase alphanumeric characters or - and should contain a min of 3 characters and a max of 62 characters'
+      });
     }
+    this.setState({ error: null });
 
     this.props.checkServiceExists(publicName, serviceName);
   }
 
   popupOkCb() {
+    if (this.props.sendAuthReq) {
+      this.props.sendMDAuthReq(this.props.match.params.publicName);
+      return;
+    }
     this.props.reset();
   }
+
+  popupCancelCb() {
+    const publicName = this.props.match.params.publicName;
+
+    if (this.props.sendAuthReq) {
+      this.props.cancelMDReq();
+      return this.props.history.push(`/newWebSite/${publicName}`);
+    }
+  }
+
 
   componentWillUnmount() {
     this.props.reset();
@@ -98,10 +96,12 @@ export default class CreateService extends Component {
     const publicName = this.props.match.params.publicName;
     return (
       <Base
+        showAuthReq={this.props.sendAuthReq}
         processing={this.props.processing}
         error={this.props.error}
         processDesc={this.props.processDesc}
         popupOkCb={this.popupOkCb.bind(this)}
+        popupCancelCb={this.popupCancelCb.bind(this)}
       >
         <div>
           <WizardNav history={this.props.history} />
@@ -122,6 +122,9 @@ export default class CreateService extends Component {
                     </div>
                     <div className="public-id">.{publicName}</div>
                   </div>
+                  {
+                    this.state.error ?  ErrorComp(<span className="err-msg">{this.state.error}</span>) : null
+                  }
                 </div>
               </div>
               <div className="opts">
