@@ -4,13 +4,15 @@ import ACTION_TYPES from './action_types';
 import api from '../lib/api';
 import CONSTANTS from '../constants';
 
+let isUploadCancelled = false;
 export const upload = (localPath, networkPath, done) => {
+  isUploadCancelled = false;
   return (dispatch) => {
     let progressCallback = (status, isCompleted) => {
-      // if (isUploadCancelled) {
-      //   progressCallback = null;
-      //   return;
-      // }
+      if (isUploadCancelled) {
+        progressCallback = null;
+        return;
+      }
       dispatch({
         type: isCompleted ? ACTION_TYPES.UPLOAD_COMPLETED : ACTION_TYPES.UPLOADING,
         payload: status
@@ -102,9 +104,23 @@ export const deleteFileOrDir = (containerPath, name) => {
   };
 };
 
-export const cancelUpload = () => ({
-  type: ACTION_TYPES.CANCEL_UPLOAD
-});
+const cancelUpload = () => {
+  // set upload cancelled flag
+  isUploadCancelled = true;
+  api.cancelFileUpload();
+  const err = new Error('Upload cancelled');
+  return {
+    type: ACTION_TYPES.UPLOAD_FAILED,
+    payload: err
+  };
+};
+
+export const cancelUploadAndReloadContainer = (networkPath: string) => {
+  return (dispatch) => {
+    dispatch(cancelUpload());
+    dispatch(getContainerInfo(networkPath));
+  };
+};
 
 export const downloadFile = (networkPath) => {
   return (dispatch) => {

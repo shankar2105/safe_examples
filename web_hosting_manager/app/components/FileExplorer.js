@@ -16,18 +16,34 @@ export default class FileExplorer extends Component {
     };
     this.getFolderEle = this.getFolderEle.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.isRootFolder = this.isRootFolder.bind(this);
+    this.getStatus = this.getStatus.bind(this);
   }
 
   getCurrentPath() {
     return this.state.currentPath || this.props.rootPath
   }
 
+  isRootFolder() {
+    return (!this.state.currentPath || (this.state.currentPath === this.props.rootPath));
+  }
+
   handleDelete(name) {
     this.props.deleteFileOrDir(this.getCurrentPath(), name);
   }
 
-  cancelUpload() {
-
+  levelBack() {
+    console.log('level back')
+    if (!this.state.currentPath) {
+      return;
+    }
+    const pathArr = this.state.currentPath.split('/');
+    pathArr.pop();
+    const previousPath = pathArr.join('/');
+    this.setState({
+      currentPath: previousPath
+    });
+    this.props.getContainerInfo(previousPath);
   }
 
   chooseUploadMenu(onlyFile) {
@@ -77,7 +93,7 @@ export default class FileExplorer extends Component {
             onClick={(e) => {
               e.preventDefault();
               if (this.props.uploading) {
-                return this.props.cancelUpload();
+                return this.props.cancelUploadAndReloadContainer(this.getCurrentPath());
               }
               this.setState({
                 showUploadMenu: !this.state.showUploadMenu
@@ -150,6 +166,41 @@ export default class FileExplorer extends Component {
     )
   }
 
+  getStatus() {
+    if (!this.props.uploadStatus) {
+      return (<span>{''}</span>);
+    }
+    return (
+      <div className="status">
+        {
+          `${this.props.uploadStatus.completed.files}/${this.props.uploadStatus.total.files}`
+        }
+        &nbsp;files uploaded
+      </div>
+    );
+  }
+
+  getNav() {
+    let levelBackBtn = null;
+    if (!this.isRootFolder()) {
+      levelBackBtn = (
+        <button
+          type="button"
+          className="btn"
+          onClick={(e) => {
+            e.preventDefault();
+            this.levelBack();
+          }}
+        >back</button>
+      );
+    }
+    return (
+      <div className="cntr-nav">
+        { levelBackBtn }
+      </div>
+    );
+  }
+
   render() {
     return (
       <div className="file-explorer">
@@ -163,17 +214,21 @@ export default class FileExplorer extends Component {
             </div>
           </div>
           <div className="cntr">
-            {
-              this.props.containerInfo ? this.props.containerInfo.map((item, index) => {
-                if (item.isFile) {
-                  return this.getFileEle(item.name, item.size, index);
-                }
-                return this.getFolderEle(item.name, index);
-              }) : null
-            }
+            <div className="cntr-b">
+              {this.getNav()}
+              {
+                this.props.containerInfo ? this.props.containerInfo.map((item, index) => {
+                    if (item.isFile) {
+                      return this.getFileEle(item.name, item.size, index);
+                    }
+                    return this.getFolderEle(item.name, index);
+                  }) : null
+              }
+            </div>
             { this.props.uploading ? (<div className="uploading"></div>) : null }
             {this.getUploadBtn()}
           </div>
+          {this.props.uploading ? this.getStatus() : this.getStatus()}
         </div>
       </div>
     );
