@@ -12,9 +12,9 @@ function mapStateToProps(state) {
     uploadStatus: state.fileManager.uploadStatus,
     containerInfo: state.fileManager.containerInfo,
     published: state.fileManager.published,
-    error: state.publicNames.error,
-    processing: state.publicNames.processing,
-    processDesc: state.publicNames.processDesc
+    error: state.publicNames.error || state.fileManager.error,
+    processing: state.publicNames.processing || state.fileManager.processing,
+    processDesc: state.publicNames.processDesc || state.fileManager.processDesc
   };
 }
 

@@ -17,7 +17,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Checking for public name access'
+        processDesc: CONSTANTS.UI.MSG.CHECK_PUB_ACCESS
       };
     case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_FULFILLED`:
       return {
@@ -37,7 +37,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Checking service exists'
+        processDesc: CONSTANTS.UI.MSG.CHECK_SERVICE_EXISTS
       };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_FULFILLED`:
       const serviceExists = !!action.payload;
@@ -46,7 +46,8 @@ export default function services(state = initState, action) {
         processing: false,
         serviceExists,
         checkedServiceExists: true,
-        error: serviceExists ? 'Service already exists' : null
+        processDesc: null,
+        error: serviceExists ? CONSTANTS.UI.MSG.SERVICE_EXISTS : null
       };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_REJECTED`:
       return {
@@ -59,7 +60,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Deleting service'
+        processDesc: CONSTANTS.UI.MSG.DELETING_SERVICE
       };
     case `${ACTION_TYPES.DELETE_SERVICE}_FULFILLED`:
       return {
@@ -77,7 +78,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Fetching service'
+        processDesc: CONSTANTS.UI.MSG.FETCHING_SERVICE
       };
     case `${ACTION_TYPES.FETCH_SERVICES}_FULFILLED`:
       return {
@@ -95,7 +96,7 @@ export default function services(state = initState, action) {
         sendAuthReq: false,
         authorisingMD: true,
         processing: true,
-        processDesc: 'Waiting for Mutable Data authorisation'
+        processDesc: CONSTANTS.UI.MSG.MD_AUTH_WAITING
       };
     case `${ACTION_TYPES.MD_AUTHORISED}_FULFILLED`:
       return {

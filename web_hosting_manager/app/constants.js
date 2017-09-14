@@ -78,17 +78,26 @@ const CONSTANTS = {
       processing: false,
       processDesc: null
     },
-    POPUP_STATES: {
-      showPopup: false,
-      popupType: null,
-      popupDesc: null
-    },
     NEW_WEBSITE_OPTIONS: {
       TEMPLATE: 'TEMPLATE',
       FROM_SCRATCH: 'FROM_SCRATCH',
       CHOOSE_EXISTING: 'CHOOSE_EXISTING'
     },
-    DEFAULT_SERVICE_CONTAINER_PREFIX: 'root-'
+    DEFAULT_SERVICE_CONTAINER_PREFIX: 'root-',
+    MSG: {
+      CREATING_PUBLIC_NAMES: 'Creating public name',
+      FETCH_SERVICE_CONTAINERS: 'Fetching service containers',
+      CHECK_PUB_ACCESS: 'Checking public name access',
+      CHECK_SERVICE_EXISTS: 'Checking service exists',
+      SERVICE_EXISTS: 'Service already exists',
+      DELETING_SERVICE: 'Deleting service',
+      FETCHING_SERVICE: 'Fetching service',
+      MD_AUTH_WAITING: 'Waiting for Mutable Data authorisation',
+      GETTING_CONT_INFO: 'Getting container information',
+      PUBLISHING_WEB: 'Publishing website',
+      DELETING_FILES: 'Deleting file or folder',
+      DOWNLOADING_FILE: 'Downloading file'
+    }
   }
 };
 export default CONSTANTS;

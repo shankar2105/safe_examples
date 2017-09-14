@@ -57,7 +57,7 @@ export default function authorisation(state = initState, action) {
       return {
         ...state,
         ...initState
-      }
+      };
     default:
       return state;
   }

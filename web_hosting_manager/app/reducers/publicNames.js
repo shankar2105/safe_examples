@@ -27,7 +27,7 @@ export default function publicNamesList(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Creating public name'
+        processDesc: CONSTANTS.UI.MSG.CREATING_PUBLIC_NAMES
       };
     case `${actionTypes.CREATE_PUBLIC_NAME}_FULFILLED`:
       return {
@@ -47,7 +47,7 @@ export default function publicNamesList(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Fetching service containers'
+        processDesc: CONSTANTS.UI.MSG.FETCH_SERVICE_CONTAINERS
       };
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_FULFILLED`:
       return {

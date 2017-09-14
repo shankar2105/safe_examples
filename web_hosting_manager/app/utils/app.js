@@ -25,43 +25,15 @@ export const bytesToSize = (bytes) => {
   return `${resultStr} ${sizes[i]}`;
 };
 
-export const resetPopup = () => {
-  return { ...CONSTANTS.UI.POPUP_STATES };
+const trimErrorMsg = (msg) => {
+  let index = msg.indexOf('->');
+  index = (index === -1) ? 0 : index + 2;
+  return msg.slice(index).trim()
 };
 
-// show loading popup
-export const setLoading = (self, desc) => {
-  self.setState({
-    showPopup: true,
-    popupType: CONSTANTS.UI.POPUP_TYPES.LOADING,
-    popupDesc: desc
-  });
-};
-
-// unset loading popup
-export const unsetLoading = (self) => {
-  if (self.state.popupType !== CONSTANTS.UI.POPUP_TYPES.LOADING) {
-    return;
-  }
-  self.setState(resetPopup());
-};
-
-// set popup error
-export const setError = (self, err) => {
-  const errMsg = err instanceof Error ? err.message : err;
-  self.setState({
-    showPopup: true,
-    popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-    popupDesc: errMsg
-  });
-};
-
-export const getPopupType = (data) => {
-  if (typeof data === 'boolean') {
-    return CONSTANTS.UI.POPUP_TYPES.LOADING;
-  } else if (typeof data === 'string') {
-    return CONSTANTS.UI.POPUP_TYPES.ERROR;
-  } else {
-    return CONSTANTS.UI.POPUP_TYPES.AUTH_REQ;
+export const parseErrorMsg = (err, target) => {
+  switch(err.code) {
+    default:
+      return trimErrorMsg(err.message);
   }
 };

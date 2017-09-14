@@ -63,8 +63,8 @@ export const publish = (publicId, serviceName, serviceContainerPath) => ({
     .then((meta) => api.createService(publicId, serviceName, meta.name))
 });
 
-export const resetFileManager = () => ({
-  type: ACTION_TYPES.RESET_FILE_MANAGER
+export const resetContainerInfo = () => ({
+  type: ACTION_TYPES.RESET_CONTAINER_INFO
 });
 
 export const publishTemplate = (publicId, serviceName, containerPath, files) => {

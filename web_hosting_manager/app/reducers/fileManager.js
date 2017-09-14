@@ -49,7 +49,7 @@ export default function fileManager(state = initState, action) {
         downloading: true,
         downloadStatus: null,
         processing: true,
-        processDesc: 'Downloading file'
+        processDesc: CONSTANTS.UI.MSG.DOWNLOADING_FILE
       };
     case ACTION_TYPES.DOWNLOADING:
       return {
@@ -79,7 +79,7 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Getting container info'
+        processDesc: CONSTANTS.UI.MSG.GETTING_CONT_INFO
       };
     case `${ACTION_TYPES.GET_CONTAINER_INFO}_FULFILLED`:
       return {
@@ -98,18 +98,20 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         processing: false,
-        processDesc: 'Publishing website'
+        processDesc: CONSTANTS.UI.MSG.PUBLISHING_WEB
       };
     case `${ACTION_TYPES.PUBLISH}_FULFILLED`:
       return {
         ...state,
         processing: false,
+        processDesc: null,
         published: true
       };
     case `${ACTION_TYPES.PUBLISH}_REJECTED`:
       return {
         ...state,
         processing: false,
+        processDesc: null,
         error: action.payload.message
       };
 
@@ -117,7 +119,7 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         processing: true,
-        processDesc: 'Deleting file or folder'
+        processDesc: CONSTANTS.UI.MSG.DELETING_FILES
       };
     case `${ACTION_TYPES.DELETE_FILE_OR_FOLDER}_FULFILLED`:
       return {
@@ -131,6 +133,12 @@ export default function fileManager(state = initState, action) {
         processing: false,
         processDesc: null,
         error: action.payload.message
+      };
+
+    case ACTION_TYPES.RESET_CONTAINER_INFO:
+      return {
+        ...state,
+        containerInfo: null
       };
 
     case ACTION_TYPES.RESET:

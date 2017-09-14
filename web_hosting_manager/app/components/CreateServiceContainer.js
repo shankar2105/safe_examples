@@ -30,6 +30,10 @@ export default class CreateServiceContainer extends Component {
       rootPath: fullContainerPath
     });
 
+    // reset container info
+    this.props.resetContainerInfo();
+
+    // get container info
     this.props.getContainerInfo(fullContainerPath);
   }
 
