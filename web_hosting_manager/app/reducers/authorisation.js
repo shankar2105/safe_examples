@@ -1,9 +1,10 @@
 import actionTypes from '../actions/action_types';
 
+import CONSTANTS from '../constants';
+
 const initState = {
-  authorising: false,
+  ...CONSTANTS.UI.COMMON_STATE,
   authorised: false,
-  authoriseErr: null,
   authRes: null
 };
 
@@ -12,27 +13,28 @@ export default function authorisation(state = initState, action) {
     case `${actionTypes.SEND_AUTH_REQUEST}_FULFILLED`:
       return {
         ...state,
-        authorising: true
+        processing: true
       };
     case `${actionTypes.SEND_AUTH_REQUEST}_REJECTED`:
       return {
         ...state,
-        authorising: false,
-        authoriseErr: action.payload.message
+        processing: false,
+        error: action.payload.message
       };
     case actionTypes.AUTHORISED:
-      const authRes = action.res.search('safe-') === 0 ? action.res : null
+      const authRes = action.res.search('safe-') === 0 ? action.res : null;
       return {
         ...state,
-        authorising: false,
+        processing: false,
         authorised: true,
-        authoriseErr: null,
+        error: null,
         authRes
       };
-    case actionTypes.RESET_AUTHORISATION:
+    case actionTypes.RESET:
       return {
         ...state,
-        ...initState
+        ...CONSTANTS.UI.COMMON_STATE,
+        authorised: false
       };
     default:
       return state;

@@ -29,6 +29,7 @@ store.dispatch(setLocale(locale));
 
 // handle auth response
 ipc.on('auth-response', (event, response) => {
+  console.log('res', response);
   store.dispatch(receiveResponse(response));
 });
 

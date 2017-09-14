@@ -44,6 +44,7 @@ const handleIPCResponse = (res) => {
   if (!res) {
     return;
   }
+  console.log('res', res);
   mainWindow.webContents.send('auth-response', res);
 };
 
@@ -95,6 +96,7 @@ app.on('ready', async () => {
   menuBuilder.buildMenu();
 
   const shouldQuit = app.makeSingleInstance(function(commandLine) {
+    console.log('commandLine', commandLine)
     if (commandLine.length >= 2 && commandLine[1]) {
       handleIPCResponse(commandLine[1]);
     }
@@ -113,6 +115,7 @@ app.on('ready', async () => {
 
 // receive IPC message for MAC OS
 app.on('open-url', function (e, url) {
+  console.log('open urk', url);
   handleIPCResponse(url);
 });
 

@@ -31,7 +31,8 @@ export default class WithTemplate extends Component {
 
     const publicName = params.publicName;
     const serviceName = params.serviceName;
-    const templateDir = `${__dirname}/components/template`;
+    console.log('process', process.env.NODE_ENV);
+    const templateDir = process.env.NODE_ENV === 'production' ? `${__dirname}/dist/template` : `${__dirname}/template`;
     const templateFilePath = `${templateDir}/_index.html`;
     const indexFilePath = `${templateDir}/index.html`;
     try {

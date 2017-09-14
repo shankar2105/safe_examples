@@ -4,6 +4,7 @@
 
 import path from 'path';
 import webpack from 'webpack';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import merge from 'webpack-merge';
@@ -139,6 +140,11 @@ export default merge.smart(baseConfig, {
     ]
   },
 
+  node: {
+    __dirname: false,
+    __filename: false
+  },
+
   plugins: [
     /**
      * Create global constants which can be configured at compile time.
@@ -164,5 +170,12 @@ export default merge.smart(baseConfig, {
       analyzerMode: process.env.OPEN_ANALYZER === 'true' ? 'server' : 'disabled',
       openAnalyzer: process.env.OPEN_ANALYZER === 'true'
     }),
+
+    new CopyWebpackPlugin([
+      {
+        from: 'app/template',
+        to: 'template'
+      }
+    ])
   ],
 });

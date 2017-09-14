@@ -26,15 +26,15 @@ export const sendAuthReq = () => ({
 export const receiveResponse = (uri) => {
   return (dispatch, getState) => {
     const currentState = getState();
-
+    console.log('currentState', )
     // handle MD auth request
     const isMDAuthorising = currentState.services.authorisingMD;
     if (isMDAuthorising) {
       return dispatch(mdAuthorised(uri));
     }
-
     // handle app auth request
-    const isAuthorising = currentState.authorisation.authorising;
+    const isAuthorising = currentState.authorisation.processing;
+    console.log('isAuthorising', isAuthorising)
     if (isAuthorising) {
       return dispatch(appAuthorised(uri));
     }
