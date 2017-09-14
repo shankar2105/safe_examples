@@ -355,6 +355,14 @@
       padding: 16px 14px 40px
       position: relative
       min-height: 340px
+      .uploading
+        position: absolute
+        width: 100%
+        height: 100%
+        top: 0
+        left: 0
+        background-color: bg-uploading
+        z-index: 1
       .i
         cursor: pointer
         line-height: 42px
@@ -404,6 +412,7 @@
         bottom: 0
         left: 0
         transform: translate(0, 50%)
+        z-index: 2
         .menu
           width: 200px
           height: 120px
@@ -433,6 +442,9 @@
           top: 5px
           transform: translate(-50%, 0)
           z-index: 9
+          &.cancel-btn
+            button
+              transform: rotate(45deg)
           &.active
             button
               background-image: url(url-upload-icon-hover)

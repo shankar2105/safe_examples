@@ -6,6 +6,8 @@ const initState = {
   ...CONSTANTS.UI.COMMON_STATE,
   uploadStatus: null,
   uploading: false,
+  downloadStatus: null,
+  downloading: false,
   containerInfo: null,
   published: false
 };
@@ -17,14 +19,12 @@ export default function fileManager(state = initState, action) {
         ...state,
         uploadStatus: null,
         uploading: true,
-        processing: true
       };
 
     case ACTION_TYPES.UPLOAD_COMPLETED:
       return {
         ...state,
         uploading: false,
-        processing: false,
         uploadStatus: null
       };
 
@@ -32,8 +32,6 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         uploading: true,
-        processing: true,
-        processDesc: 'Uploading files',
         uploadStatus: action.payload
       };
     case ACTION_TYPES.UPLOAD_FAILED:
@@ -43,6 +41,38 @@ export default function fileManager(state = initState, action) {
         uploadStatus: null,
         processing: false,
         error: action.payload.message
+      };
+
+    case ACTION_TYPES.DOWNLOAD_STARTED:
+      return {
+        ...state,
+        downloading: true,
+        downloadStatus: null,
+        processing: true,
+        processDesc: 'Downloading file'
+      };
+    case ACTION_TYPES.DOWNLOADING:
+      return {
+        ...state,
+        downloading: true,
+        downloadStatus: action.payload
+      };
+    case ACTION_TYPES.DOWNLOAD_FAILED:
+      return {
+        ...state,
+        downloading: false,
+        downloadStatus: null,
+        processing: false,
+        processDesc: null,
+        error: action.payload.message
+      };
+    case ACTION_TYPES.DOWNLOAD_COMPLETED:
+      return {
+        ...state,
+        downloading: false,
+        downloadStatus: null,
+        processing: false,
+        processDesc: null
       };
 
     case `${ACTION_TYPES.GET_CONTAINER_INFO}_PENDING`:

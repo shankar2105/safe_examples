@@ -101,3 +101,27 @@ export const deleteFileOrDir = (containerPath, name) => {
     });
   };
 };
+
+export const cancelUpload = () => ({
+  type: ACTION_TYPES.CANCEL_UPLOAD
+});
+
+export const downloadFile = (networkPath) => {
+  return (dispatch) => {
+    dispatch({
+      type: ACTION_TYPES.DOWNLOAD_STARTED
+    });
+    api.fileDownload(networkPath, (err, status) => {
+      if (err) {
+        return dispatch({
+          type: ACTION_TYPES.DOWNLOAD_FAILED,
+          payload: err
+        });
+      }
+      dispatch({
+        type: status.completed ? ACTION_TYPES.DOWNLOAD_COMPLETED : ACTION_TYPES.DOWNLOADING,
+        payload: status.progress
+      });
+    });
+  };
+};

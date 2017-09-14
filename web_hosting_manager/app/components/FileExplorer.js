@@ -26,6 +26,10 @@ export default class FileExplorer extends Component {
     this.props.deleteFileOrDir(this.getCurrentPath(), name);
   }
 
+  cancelUpload() {
+
+  }
+
   chooseUploadMenu(onlyFile) {
     this.setState({
       showUploadMenu: !this.state.showUploadMenu
@@ -59,15 +63,22 @@ export default class FileExplorer extends Component {
     </div>
     ) : null;
 
+    const uploadBaseCn = classNames('upload-btn-b', 'active', {
+      'cancel-btn': this.props.uploading
+    });
+
     return (
       <div className="upload">
         {uploadMenu}
-        <div className="upload-btn-b active">
+        <div className={uploadBaseCn}>
           <button
             type="button"
             className="upload-btn"
             onClick={(e) => {
               e.preventDefault();
+              if (this.props.uploading) {
+                return this.props.cancelUpload();
+              }
               this.setState({
                 showUploadMenu: !this.state.showUploadMenu
               });
@@ -81,7 +92,15 @@ export default class FileExplorer extends Component {
 
   getFileEle(name, sizeInBytes, key) {
     return (
-      <div className="i file" key={key}>
+      <div
+        className="i file"
+        key={key}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          const path = `${this.getCurrentPath()}/${name}`;
+          this.props.downloadFile(path);
+        }}
+      >
         <div className="i-b">
           <span className="name">{name}</span>
           <span className="size">{bytesToSize(sizeInBytes)}</span>
@@ -102,16 +121,18 @@ export default class FileExplorer extends Component {
 
   getFolderEle(name, key) {
     return (
-      <div className="i dir" key={key} onDoubleClick={(e) => {
-        e.preventDefault();
-        console.log('after', this.state)
-        const path = `${this.getCurrentPath()}/${name}`;
-        console.log('path', path)
-        this.props.getContainerInfo(path)
-        this.setState({
-          currentPath: path
-        });
-      }}>
+      <div
+        className="i dir"
+        key={key}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          const path = `${this.getCurrentPath()}/${name}`;
+          this.props.getContainerInfo(path)
+          this.setState({
+            currentPath: path
+          });
+        }}
+      >
         <div className="i-b">
           <span className="name">{name}</span>
         </div>
@@ -150,6 +171,7 @@ export default class FileExplorer extends Component {
                 return this.getFolderEle(item.name, index);
               }) : null
             }
+            { this.props.uploading ? (<div className="uploading"></div>) : null }
             {this.getUploadBtn()}
           </div>
         </div>
