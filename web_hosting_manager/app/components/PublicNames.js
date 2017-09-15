@@ -55,7 +55,7 @@ export default class PublicNames extends Component {
               }}
             >{''}</button>
           </div>
-          <div className="opt-i"><button type="button" className="remap-btn">{''}</button></div>
+          <div className="opt-i"><button type="button" disabled="disabled" className="remap-btn">{''}</button></div>
         </div>
       </div>
     );
