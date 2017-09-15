@@ -33,6 +33,18 @@ const trimErrorMsg = (msg) => {
 
 export const parseErrorMsg = (err, target) => {
   switch(err.code) {
+    case CONSTANTS.ERROR_CODE.NO_SUCH_KEY:
+      return CONSTANTS.UI.ERROR_MSG.NO_SUCH_KEY;
+
+    case CONSTANTS.ERROR_CODE.ENTRY_EXISTS:
+      return CONSTANTS.UI.ERROR_MSG.ENTRY_EXISTS;
+
+    case CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY:
+      return CONSTANTS.UI.ERROR_MSG.NO_SUCH_ENTRY;
+
+    case CONSTANTS.ERROR_CODE.LOW_BALANCE:
+      return CONSTANTS.UI.ERROR_MSG.LOW_BALANCE;
+
     default:
       return trimErrorMsg(err.message);
   }

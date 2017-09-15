@@ -1,6 +1,7 @@
 import ACTION_TYPES from '../actions/action_types';
 
 import CONSTANTS from '../constants';
+import { parseErrorMsg } from '../utils/app';
 
 const initState = {
   checkedServiceExists: false,
@@ -53,7 +54,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case `${ACTION_TYPES.DELETE_SERVICE}_PENDING`:
@@ -71,7 +72,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case `${ACTION_TYPES.FETCH_SERVICES}_PENDING`:
@@ -89,7 +90,7 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
     case ACTION_TYPES.SEND_MD_REQ:
       return {
@@ -109,7 +110,7 @@ export default function services(state = initState, action) {
         authorisingMD: false,
         processing: false,
         processDesc: null,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
     case ACTION_TYPES.CANCEL_MD_REQ:
       return {

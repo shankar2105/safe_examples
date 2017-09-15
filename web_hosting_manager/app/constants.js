@@ -48,6 +48,7 @@ const CONSTANTS = {
     NO_SUCH_ENTRY: -106,
     ENTRY_EXISTS: -107,
     TOO_MANY_ENTRIES: -108,
+      NO_SUCH_KEY: -109,
     LOW_BALANCE: -113,
     INVALID_SIGN_KEY_HANDLE: -1011,
     EMPTY_DIR: -1029
@@ -97,6 +98,12 @@ const CONSTANTS = {
       PUBLISHING_WEB: 'Publishing website',
       DELETING_FILES: 'Deleting file or folder',
       DOWNLOADING_FILE: 'Downloading file'
+    },
+    ERROR_MSG: {
+      LOW_BALANCE: 'Network operation is not possible as there is insufficient account balance',
+      NO_SUCH_ENTRY: 'Data not found',
+      ENTRY_EXISTS: 'Data already exists',
+      NO_SUCH_KEY: 'Unable to fetch data'
     }
   }
 };

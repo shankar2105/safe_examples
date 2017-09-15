@@ -1,6 +1,7 @@
 /**
  * SafeApi class expose all api requested for web hosting manager.
  */
+import { shell } from 'electron';
 import path from 'path';
 import safeApp from 'safe-app';
 import { I18n } from 'react-redux-i18n';
@@ -96,6 +97,13 @@ class SafeApi {
       .then((res) => {
         console.log('connected with MD');
       });
+  }
+
+  openLogFile() {
+    if (!this.app) {
+      return;
+    }
+    this.app.logPath().then(shell.openItem);
   }
 
   /**

@@ -1,6 +1,7 @@
 import ACTION_TYPES from '../actions/action_types';
 
 import CONSTANTS from '../constants';
+import { parseErrorMsg } from '../utils/app';
 
 const initState = {
   ...CONSTANTS.UI.COMMON_STATE,
@@ -40,7 +41,7 @@ export default function fileManager(state = initState, action) {
         uploading: false,
         uploadStatus: null,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case ACTION_TYPES.DOWNLOAD_STARTED:
@@ -91,7 +92,7 @@ export default function fileManager(state = initState, action) {
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case `${ACTION_TYPES.PUBLISH}_PENDING`:
@@ -112,7 +113,7 @@ export default function fileManager(state = initState, action) {
         ...state,
         processing: false,
         processDesc: null,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case `${ACTION_TYPES.DELETE_FILE_OR_FOLDER}_PENDING`:
@@ -132,7 +133,7 @@ export default function fileManager(state = initState, action) {
         ...state,
         processing: false,
         processDesc: null,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case ACTION_TYPES.RESET_CONTAINER_INFO:

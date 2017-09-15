@@ -117,6 +117,11 @@ export default class CreateService extends Component {
                         type="text"
                         name="service-name"
                         placeholder="Service Name"
+                        onKeyPress={(e) => {
+                          if (e.charCode === 13) {
+                            this.handleNext(e);
+                          }
+                        }}
                         ref={(c) => {this.serviceName = c;}}
                       />
                     </div>

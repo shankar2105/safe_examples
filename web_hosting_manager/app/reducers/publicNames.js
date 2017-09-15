@@ -2,6 +2,7 @@ import lodash from 'lodash';
 import actionTypes from '../actions/action_types';
 
 import CONSTANTS from '../constants';
+import { parseErrorMsg } from '../utils/app';
 
 const initState = {
   publicNames: {},
@@ -40,7 +41,7 @@ export default function publicNamesList(state = initState, action) {
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
 
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_PENDING`:
@@ -59,8 +60,9 @@ export default function publicNamesList(state = initState, action) {
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: parseErrorMsg(action.payload)
       };
+
     case actionTypes.RESET:
       return {
         ...state,

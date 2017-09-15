@@ -1,5 +1,7 @@
 import ACTION_TYPE from '../actions/action_types';
 
+import { parseErrorMsg } from '../utils/app';
+
 const initState = {
   connected: false,
   fetchedAccessInfo: false,
@@ -26,7 +28,7 @@ export default function authorisation(state = initState, action) {
       return {
         ...state,
         loading: false,
-        error: action.payload ? action.payload.message : action.error
+        error: action.payload ? parseErrorMsg(action.payload) : action.error
       };
     case ACTION_TYPE.CONNECTED:
       return {
