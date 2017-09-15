@@ -1,7 +1,7 @@
 {
   "name": "web-hosting-manager",
   "productName": "Web Hosting Manager",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Application to host web files in the SAFE Network",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
@@ -35,21 +35,6 @@
     "productName": "web-hosting-manager",
     "appId": "net.maidsafe.examples.webhostingmanager",
     "asar": false,
-    "dmg": {
-      "contents": [
-        {
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        }
-      ]
-    },
     "files": [
       "dist/",
       "node_modules/",
