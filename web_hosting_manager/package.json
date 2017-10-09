@@ -28,7 +28,7 @@
   "keywords": [
     "MaidSafe",
     "DemoApp",
-    "Web Hosting"
+    "Web hosting manager"
   ],
   "homepage": "https://github.com/maidsafe/safe_examples#readme",
   "config": {
@@ -46,15 +46,21 @@
         ]
       },
       "electronPackagerConfig": {
-        "name": "safe-mail-tutorial",
+        "name": "web-hosting_manager",
         "appBundleId": "net.maidsafe.examples.webhostingmanager",
-        "appCategoryType": "public.app-category.tools",
+        "appCategoryType": "public.app-category.utilities",
         "dir": "./",
-        "icon": "app/app.icns",
-        "packageManager": "yarn"
+        "icon": "src/app.icns",
+        "packageManager": "yarn",
+        "asar": {
+          "unpackDir": "{src/template,**/@maidsafe/**/*}"
+        },
+        "protocol": [
+          "safe-bmv0lm1hawrzywzllmv4yw1wbgvzlndlymhvc3rpbmdtyw5hz2vy"
+        ]
       },
       "electronWinstallerConfig": {
-        "name": "web_hosting_manager"
+        "name": "web-hosting_manager"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
@@ -64,7 +70,7 @@
       },
       "windowsStoreConfig": {
         "packageName": "",
-        "name": "web_hosting_manager"
+        "name": "web-hosting_manager"
       }
     }
   },
@@ -88,7 +94,8 @@
     "redux-logger": "^3.0.6",
     "redux-promise-middleware": "^4.4.1",
     "redux-thunk": "^2.2.0",
-    "temp": "^0.8.3"
+    "temp": "^0.8.3",
+    "temp-write": "^3.3.0"
   },
   "devDependencies": {
     "babel-plugin-transform-async-to-generator": "^6.24.1",

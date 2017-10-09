@@ -74,6 +74,8 @@ const CONSTANTS = {
   UPLOAD_CHUNK_SIZE: 1000000,
   ASAR_LIB_PATH: path.resolve( __dirname, '../..', 'app.asar.unpacked/node_modules/@maidsafe/safe-node-app/src/native'),
   DEV_LIB_PATH: path.resolve( __dirname, '..', 'node_modules/@maidsafe/safe-node-app/src/native'),
+  DEV_TEMPLATE_PATH: path.resolve( __dirname, '..', 'src/template'),
+  ASAR_TEMPLATE_PATH: path.resolve( __dirname, '../..', 'app.asar.unpacked/src/template'),
   UI: {
     POPUP_TYPES: {
       LOADING: 'LOADING',

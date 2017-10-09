@@ -2,6 +2,7 @@
 import fs from 'fs';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import tempWrite from 'temp-write';
 
 import CONSTANTS from '../constants';
 import Base from './_Base';
@@ -31,16 +32,15 @@ export default class WithTemplate extends Component {
 
     const publicName = params.publicName;
     const serviceName = params.serviceName;
-    const templateDir = process.env.NODE_ENV === 'production' ? `${__dirname}/dist/template` : `${__dirname}/template`;
+    const templateDir = process.env.NODE_ENV === 'dev' ? CONSTANTS.DEV_TEMPLATE_PATH : CONSTANTS.ASAR_TEMPLATE_PATH;
     const templateFilePath = `${templateDir}/_index.html`;
-    const indexFilePath = `${templateDir}/index.html`;
     try {
       const indexFile = fs.readFileSync(templateFilePath);
       const updatedContent = indexFile.toString().replace('%pt', this.state.title).replace('%t', this.state.title).replace('%d', this.state.description);
-      fs.writeFileSync(indexFilePath, updatedContent);
+      const tempFile = tempWrite.sync(updatedContent, 'index.html');
       
       const filesToUpload = [
-        indexFilePath,
+        tempFile,
         `${templateDir}/main.css`
       ];
       const containerPath = `_public/${publicName}/${utils.defaultServiceContainerName(serviceName)}`;

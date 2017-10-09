@@ -589,7 +589,7 @@ babel-plugin-transform-class-constructor-call@^6.24.1:
     babel-runtime "^6.22.0"
     babel-template "^6.24.1"
 
-babel-plugin-transform-class-properties@^6.24.1:
+babel-plugin-transform-class-properties@^6.23.0, babel-plugin-transform-class-properties@^6.24.1:
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-class-properties/-/babel-plugin-transform-class-properties-6.24.1.tgz#6a79763ea61d33d36f37b611aa9def81a81b46ac"
   dependencies:
@@ -812,7 +812,7 @@ babel-plugin-transform-function-bind@^6.22.0:
     babel-plugin-syntax-function-bind "^6.8.0"
     babel-runtime "^6.22.0"
 
-babel-plugin-transform-object-rest-spread@^6.22.0, babel-plugin-transform-object-rest-spread@^6.26.0:
+babel-plugin-transform-object-rest-spread@^6.22.0, babel-plugin-transform-object-rest-spread@^6.23.0, babel-plugin-transform-object-rest-spread@^6.26.0:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-object-rest-spread/-/babel-plugin-transform-object-rest-spread-6.26.0.tgz#0f36692d50fef6b7e2d4b3ac1478137a963b7b06"
   dependencies:
@@ -908,6 +908,16 @@ babel-preset-es2016-node5@^1.1.2:
     babel-plugin-transform-es2015-spread "^6.1.4"
     babel-plugin-transform-es2015-sticky-regex "^6.0.2"
     babel-plugin-transform-es2015-unicode-regex "^6.0.2"
+
+babel-preset-es2017-node7@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/babel-preset-es2017-node7/-/babel-preset-es2017-node7-0.5.2.tgz#da6beb760a3f8edb197b06f9ddeefcda9a57e5f2"
+  dependencies:
+    babel-plugin-syntax-trailing-function-commas "^6.22.0"
+    babel-plugin-transform-class-properties "^6.23.0"
+    babel-plugin-transform-es2015-modules-commonjs "^6.23.0"
+    babel-plugin-transform-export-extensions "^6.22.0"
+    babel-plugin-transform-object-rest-spread "^6.23.0"
 
 babel-preset-flow@^6.23.0:
   version "6.23.0"
@@ -3524,6 +3534,12 @@ macos-alias@~0.2.5:
   dependencies:
     nan "^2.4.0"
 
+make-dir@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/make-dir/-/make-dir-1.0.0.tgz#97a011751e91dd87cfadef58832ebb04936de978"
+  dependencies:
+    pify "^2.3.0"
+
 map-obj@^1.0.0, map-obj@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/map-obj/-/map-obj-1.0.1.tgz#d933ceb9205d82bdcf4886f6742bdc2b4dea146d"
@@ -4065,7 +4081,7 @@ performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
 
-pify@^2.0.0, pify@^2.3.0:
+pify@^2.0.0, pify@^2.2.0, pify@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/pify/-/pify-2.3.0.tgz#ed141a6ac043a849ea588498e7dca8b15330e90c"
 
@@ -5326,6 +5342,21 @@ tar@^2.0.0:
     fstream "^1.0.2"
     inherits "2"
 
+temp-dir@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/temp-dir/-/temp-dir-1.0.0.tgz#0a7c0ea26d3a39afa7e0ebea9c1fc0bc4daa011d"
+
+temp-write@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/temp-write/-/temp-write-3.3.0.tgz#c1a96de2b36061342eae81f44ff001aec8f615a9"
+  dependencies:
+    graceful-fs "^4.1.2"
+    is-stream "^1.1.0"
+    make-dir "^1.0.0"
+    pify "^2.2.0"
+    temp-dir "^1.0.0"
+    uuid "^3.0.1"
+
 temp@^0.8.3:
   version "0.8.3"
   resolved "https://registry.yarnpkg.com/temp/-/temp-0.8.3.tgz#e0c6bc4d26b903124410e4fed81103014dfc1f59"
@@ -5652,7 +5683,7 @@ uuid@3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.1.tgz#6544bba2dfda8c1cf17e629a3a305e2bb1fee6c1"
 
-uuid@^3.1.0:
+uuid@^3.0.1, uuid@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.1.0.tgz#3dd3d3e790abc24d7b0d3a034ffababe28ebbc04"
 
