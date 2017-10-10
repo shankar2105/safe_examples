@@ -1,13 +1,13 @@
 {
-  "name": "web_hosting_manager",
-  "productName": "web_hosting_manager",
+  "name": "web-hosting-manager",
+  "productName": "Web Hosting Manager",
   "version": "0.4.1",
   "description": "Application to host web files in the SAFE Network",
   "main": "src/index.js",
   "identifier": "net.maidsafe.examples.webhostingmanager",
   "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
+    "start": "cross-env NODE_ENV=development electron-forge start",
+    "package": "cross-env npm_config_target=1.7.8 npm_config_arch=x64 npm_config_target_arch=x64 npm_config_disturl=https://atom.io/download/electron npm_config_runtime=electron npm_config_build_from_source=true electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
@@ -46,7 +46,7 @@
         ]
       },
       "electronPackagerConfig": {
-        "name": "web-hosting_manager",
+        "name": "web-hosting-manager",
         "appBundleId": "net.maidsafe.examples.webhostingmanager",
         "appCategoryType": "public.app-category.utilities",
         "dir": "./",
@@ -60,7 +60,7 @@
         ]
       },
       "electronWinstallerConfig": {
-        "name": "web-hosting_manager"
+        "name": "web-hosting-manager"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
@@ -70,7 +70,7 @@
       },
       "windowsStoreConfig": {
         "packageName": "",
-        "name": "web-hosting_manager"
+        "name": "web-hosting-manager"
       }
     }
   },
@@ -106,6 +106,7 @@
     "babel-preset-es2017-node7": "^0.5.2",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
+    "cross-env": "^5.0.5",
     "electron-forge": "^4.1.1",
     "electron-prebuilt-compile": "1.7.8"
   }

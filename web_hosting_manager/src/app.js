@@ -9,7 +9,7 @@ import { configureStore, history } from './store/configureStore';
 import loadLocale from './locales/loader';
 import { initTempFolder } from './lib/temp';
 
-import { receiveResponse } from './actions/authorisation';
+import { receiveResponse, simulateMockRes } from './actions/authorisation';
 
 const store = configureStore();
 
@@ -29,6 +29,10 @@ store.dispatch(setLocale(locale));
 // handle auth response
 ipc.on('auth-response', (event, response) => {
   store.dispatch(receiveResponse(response));
+});
+
+ipc.on('simulate-mock-res', () => {
+  store.dispatch(simulateMockRes());
 });
 
 const renderApp = () => {

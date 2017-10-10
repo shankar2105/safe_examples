@@ -11,7 +11,7 @@ import Downloader from './Downloader';
 import * as utils from './utils';
 import CONSTANTS from '../constants';
 
-const DEVELOPMENT = 'dev';
+const DEVELOPMENT = 'development';
 const nodeEnv = process.env.NODE_ENV || DEVELOPMENT
 
 let libPath;
@@ -42,6 +42,17 @@ class SafeApi {
   }
 
   /**
+   * Authorise app for test
+   */
+  authoriseMock() {
+    return safeApp.initializeApp(this.APP_INFO.data, null, { libPath })
+      .then((app) => app.auth.loginForTest(this.APP_INFO.permissions))
+      .then((app) => {
+        this.app = app
+      });
+  }
+
+  /**
    * CONNECT with SAFE Network
    * @param uri
    * @return {*}
@@ -50,6 +61,9 @@ class SafeApi {
     const authInfo = uri;
     if (!authInfo) {
       return Promise.reject(new Error('Missing Authorisation information.'));
+    }
+    if (authInfo === CONSTANTS.MOCK_RES_URI) {
+      return Promise.resolve();
     }
     return safeApp.fromAuthURI(this.APP_INFO.data, authInfo, nwStateChangeCb, { libPath })
       .then((app) => {

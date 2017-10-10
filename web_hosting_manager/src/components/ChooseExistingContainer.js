@@ -86,6 +86,7 @@ export default class ChooseExistingContainer extends Component {
 
   render() {
     const { params } = this.props.match;
+    const { serviceContainers } = this.props;
 
     const publicName = params.publicName;
     const serviceName = params.serviceName;
@@ -115,6 +116,7 @@ export default class ChooseExistingContainer extends Component {
                           type="button"
                           className="btn"
                           name="reload-containers"
+                          disabled={serviceContainers.length === 0}
                           onClick={this.reloadContainers.bind(this)}
                         >{''}</button>
                       </div>

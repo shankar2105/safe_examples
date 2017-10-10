@@ -2,6 +2,8 @@
 import api from '../lib/api';
 import actionTypes from './action_types';
 
+import CONSTANTS from '../constants';
+
 const appAuthorised = (res) => ({
   type: actionTypes.AUTHORISED,
   res
@@ -47,6 +49,16 @@ export const reconnectApp = () => ({
     type: actionTypes.RECONNECT_APP,
     payload: api.reconnect()
 });
+
+/**
+ * Simulate mock response
+ */
+export const simulateMockRes = () => {
+  return (dispatch) => {
+    api.authoriseMock()
+      .then(() => dispatch(appAuthorised(CONSTANTS.MOCK_RES_URI)));
+  };
+};
 
 export const reset = () => ({
   type: actionTypes.RESET_AUTHORISATION

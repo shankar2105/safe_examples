@@ -2,6 +2,8 @@ import { app, BrowserWindow } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { enableLiveReload } from 'electron-compile';
 
+import MenuBuilder from './menu';
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
@@ -33,7 +35,7 @@ const createWindow = async () => {
   // Open the DevTools.
   if (isDevMode) {
     await installExtension(REACT_DEVELOPER_TOOLS);
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   }
 
   mainWindow.webContents.on('did-finish-load', () => {
@@ -43,6 +45,9 @@ const createWindow = async () => {
     mainWindow.show();
     mainWindow.focus();
   });
+
+  const menuBuilder = new MenuBuilder(mainWindow);
+  menuBuilder.buildMenu();
 
   const shouldQuit = app.makeSingleInstance(function(commandLine) {
     if (commandLine.length >= 2 && commandLine[1]) {

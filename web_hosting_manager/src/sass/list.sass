@@ -1,5 +1,5 @@
 .public-id-ls
-  width: cntr-wight
+  width: $cntr-wight
   margin: 0 auto
   padding: 60px 0
   .public-id-ls-b
@@ -9,8 +9,8 @@
       margin-bottom: 24px
     .i-h
       background-color: #e0ebf7
-      height: public-id-ls-item-height
-      line-height: public-id-ls-item-height
+      height: $public-id-ls-item-height
+      line-height: $public-id-ls-item-height
       padding-left: 70px
       position: relative
       cursor: pointer
@@ -18,7 +18,7 @@
         content: ""
         width: 10px
         height: 14px
-        background-image: url(url-accordion-arrow)
+        background-image: url($url-accordion-arrow)
         background-repeat: no-repeat
         background-size: contain
         background-position: center
@@ -32,7 +32,7 @@
         width: 30px
         height: 30px
         display: block
-        background-image: url(url-public-id-icon)
+        background-image: url($url-public-id-icon)
         position: absolute
         top: 50%
         left: 40px
@@ -47,7 +47,7 @@
         width: 65%
         padding-left: 15px
         font-size: 20px
-        color: color-common-text
+        color: $color-common-text
         overflow: hidden
         text-overflow: ellipsis
         white-space: nowrap
@@ -66,14 +66,14 @@
         padding-right: 90px
         border-bottom: 2px solid #ffffff 
         .i-cnt-h-b
-          clearfix()
+          +clearfix()
           .name
           .location
             display: inline-block
             width: 50%
             float: left
             font-size: 14px
-            color: color-common-text
+            color: $color-common-text
             line-height: 26px
       .i-cnt-ls
         padding-top: 30px
@@ -84,8 +84,8 @@
           &:not(:last-child)
             margin-bottom: 35px
           .i-cnt-ls-i-b
-            clearfix()
-            .name
+            +clearfix()
+            .name,
             .location
               width: 50%
               float: left
@@ -93,7 +93,7 @@
               font-size: 20px
               font-weight: 600
               a
-                color: color-pr-blue
+                color: $color-pr-blue
                 text-decoration: none
                 &:hover
                   text-decoration: underline
@@ -104,7 +104,7 @@
             position: absolute
             top: 0
             right: 0
-            clearfix()
+            +clearfix()
             .opt-i
               display: inline-block
               float: left

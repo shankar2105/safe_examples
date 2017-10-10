@@ -32,7 +32,7 @@ export default class WithTemplate extends Component {
 
     const publicName = params.publicName;
     const serviceName = params.serviceName;
-    const templateDir = process.env.NODE_ENV === 'dev' ? CONSTANTS.DEV_TEMPLATE_PATH : CONSTANTS.ASAR_TEMPLATE_PATH;
+    const templateDir = process.env.NODE_ENV === 'development' ? CONSTANTS.DEV_TEMPLATE_PATH : CONSTANTS.ASAR_TEMPLATE_PATH;
     const templateFilePath = `${templateDir}/_index.html`;
     try {
       const indexFile = fs.readFileSync(templateFilePath);
