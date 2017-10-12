@@ -7,9 +7,6 @@ const initState = {
   nwState: CONSTANTS.NETWORK_STATE.UNKNOWN,
   connected: false,
   fetchedAccessInfo: false,
-  fetchedPublicNames: false,
-  fetchedPublicContainer: false,
-  fetchedServices: false,
   loading: false,
   error: null
 };
@@ -57,21 +54,6 @@ export default function initialisation(state = initState, action) {
       return {
         ...state,
         fetchedAccessInfo: true,
-      };
-    case ACTION_TYPE.FETCHED_PUBLIC_NAMES:
-      return {
-        ...state,
-        fetchedPublicNames: true,
-      };
-    case ACTION_TYPE.FETCHED_PUBLIC_CONTAINER:
-      return {
-        ...state,
-        fetchedPublicContainer: true,
-      };
-    case ACTION_TYPE.FETCHED_SERVICES:
-      return {
-        ...state,
-        fetchedServices: true,
       };
     case ACTION_TYPE.RESET_INITIALISATION:
       return {

@@ -1,12 +1,21 @@
 // @flow
 
+/**
+ * Actions related to file management
+ */
 import ACTION_TYPES from './action_types';
 import api from '../lib/api';
+import { canAccessPublicName } from './public_names';
 import CONSTANTS from '../constants';
 
-import { canAccessPublicName } from './public_names';
-
 let isUploadCancelled = false;
+
+/**
+ * Upload file or directory
+ * @param {string} localPath 
+ * @param {string} networkPath 
+ * @param {function} done 
+ */
 export const upload = (localPath, networkPath, done) => {
   isUploadCancelled = false;
   return (dispatch) => {
@@ -114,7 +123,7 @@ const cancelUpload = () => {
   };
 };
 
-export const cancelUploadAndReloadContainer = (networkPath: string) => {
+export const cancelUploadAndReloadContainer = (networkPath) => {
   return (dispatch) => {
     dispatch(cancelUpload());
     dispatch(getContainerInfo(networkPath));
