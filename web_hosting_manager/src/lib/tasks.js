@@ -10,32 +10,36 @@ const parseContainerPath = (targetPath) => {
     return null;
   }
   const split = targetPath.split('/');
-  let fileName = targetPath.split('/').slice(3).join('/');
+  const fileName = targetPath.split('/').slice(3).join('/');
 
   return {
     target: split.slice(0, 3).join('/'),
-    file: fileName || path.basename(targetPath)
+    file: fileName || path.basename(targetPath),
   };
 };
 
 class Task {
-
+  /* eslint-disable class-methods-use-this */
   execute(callback) {
+    /* eslint-enable class-methods-use-this */
     const error = new Error(I18n.t('messages.notImplemented'));
     callback(error);
   }
 }
 
 export class EmptyDirTask {
+  constructor() {
+    this.errorMsg = 'Uploading empty folders is not supported/allowed';
+  }
+
   execute(callback) {
-    const error = new Error('Uploading empty folders is not supported/allowed');
+    const error = new Error(this.errorMsg);
     error.code = CONSTANTS.ERROR_CODE.EMPTY_DIR;
     callback(error, { isFile: false, isCompleted: true, size: 1 });
   }
 }
 
 export class FileUploadTask extends Task {
-
   constructor(localPath, networkPath) {
     super();
     this.localPath = localPath;
@@ -44,7 +48,7 @@ export class FileUploadTask extends Task {
   }
 
   execute(callback) {
-    const app = safeApi.app;
+    const { app } = safeApi;
     if (!app) {
       return callback(new Error('App not registered'));
     }
@@ -52,20 +56,19 @@ export class FileUploadTask extends Task {
     const fileStats = fs.statSync(this.localPath);
 
     return safeApi.getPublicContainer()
-      .then((md) => safeApi.getMDataValueForKey(md, containerPath.target))
-      .then((val) => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
+      .then(md => safeApi.getMDataValueForKey(md, containerPath.target))
+      .then(val => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.open()
-          .then(file => {
-            return new Promise((resolve, reject) => {
+          .then(file => (
+            new Promise((resolve, reject) => {
               const fd = fs.openSync(this.localPath, 'r');
               let offset = 0;
-              const size = fileStats.size;
+              const { size } = fileStats;
               let chunkSize = CONSTANTS.UPLOAD_CHUNK_SIZE;
               let buffer = null;
               const writeFile = (remainingBytes) => {
-
                 if (this.cancelled) {
                   return reject(new Error());
                 }
@@ -74,36 +77,34 @@ export class FileUploadTask extends Task {
                   chunkSize = remainingBytes;
                 }
 
-                buffer = new Buffer(chunkSize);
+                buffer = Buffer.alloc(chunkSize);
                 fs.readSync(fd, buffer, 0, chunkSize, offset);
                 return file.write(buffer)
                   .then(() => {
                     offset += chunkSize;
-
                     remainingBytes -= chunkSize;
 
                     if (offset === size) {
                       callback(null, {
                         isFile: true,
                         isCompleted: false,
-                        size: chunkSize
+                        size: chunkSize,
                       });
                       return file.close().then(() => resolve(file));
-                    } else {
-                      callback(null, {
-                        isFile: true,
-                        isCompleted: false,
-                        size: chunkSize
-                      })
-                      return writeFile(remainingBytes);
                     }
+                    callback(null, {
+                      isFile: true,
+                      isCompleted: false,
+                      size: chunkSize,
+                    });
+                    return writeFile(remainingBytes);
                   })
                   .catch(err => reject(err));
               };
               writeFile(size);
-            });
-          })
-          .then((file) => nfs.insert(containerPath.file, file)
+            })
+          ))
+          .then(file => nfs.insert(containerPath.file, file)
             .catch((err) => {
               if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
                 return callback(err);
@@ -117,13 +118,11 @@ export class FileUploadTask extends Task {
                 });
             }));
       })
-      .then(() => {
-        return callback(null, {
-          isFile: true,
-          isCompleted: true,
-          size: 0
-        });
-      })
+      .then(() => callback(null, {
+        isFile: true,
+        isCompleted: true,
+        size: 0,
+      }))
       .catch(callback);
   }
 }
