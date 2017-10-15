@@ -5,7 +5,7 @@ import CONSTANTS from '../constants';
 const initState = {
   ...CONSTANTS.UI.COMMON_STATE,
   authorised: false,
-  authRes: null
+  authRes: null,
 };
 
 export default function authorisation(state = initState, action) {
@@ -13,28 +13,29 @@ export default function authorisation(state = initState, action) {
     case `${actionTypes.SEND_AUTH_REQUEST}_FULFILLED`:
       return {
         ...state,
-        processing: true
+        processing: true,
       };
     case `${actionTypes.SEND_AUTH_REQUEST}_REJECTED`:
       return {
         ...state,
         processing: false,
-        error: action.payload.message
+        error: action.payload.message,
       };
-    case actionTypes.AUTHORISED:
+    case actionTypes.AUTHORISED: {
       const authRes = ((action.res.search('safe-') === 0) && !(action.res.search('safe-auth') === 0)) ? action.res : null;
       return {
         ...state,
         processing: false,
         authorised: !!authRes,
         error: null,
-        authRes
+        authRes,
       };
+    }
     case actionTypes.RESET:
       return {
         ...state,
         ...CONSTANTS.UI.COMMON_STATE,
-        authorised: false
+        authorised: false,
       };
     default:
       return state;

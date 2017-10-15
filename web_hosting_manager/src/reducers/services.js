@@ -10,39 +10,38 @@ const initState = {
   authorisingMD: false,
   authorisedMD: false,
   remapped: false,
-  ...CONSTANTS.UI.COMMON_STATE
+  ...CONSTANTS.UI.COMMON_STATE,
 };
 
 export default function services(state = initState, action) {
   switch (action.type) {
-
     case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_PENDING`:
       return {
         ...state,
         processing: true,
-        processDesc: CONSTANTS.UI.MSG.CHECK_PUB_ACCESS
+        processDesc: CONSTANTS.UI.MSG.CHECK_PUB_ACCESS,
       };
     case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_FULFILLED`:
       return {
         ...state,
         processing: false,
         processDesc: null,
-        sendAuthReq: false
+        sendAuthReq: false,
       };
     case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_REJECTED`:
       return {
         ...state,
         processing: false,
         processDesc: null,
-        sendAuthReq: true
+        sendAuthReq: true,
       };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_PENDING`:
       return {
         ...state,
         processing: true,
-        processDesc: CONSTANTS.UI.MSG.CHECK_SERVICE_EXISTS
+        processDesc: CONSTANTS.UI.MSG.CHECK_SERVICE_EXISTS,
       };
-    case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_FULFILLED`:
+    case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_FULFILLED`: {
       const serviceExists = !!action.payload;
       return {
         ...state,
@@ -50,49 +49,50 @@ export default function services(state = initState, action) {
         serviceExists,
         checkedServiceExists: true,
         processDesc: null,
-        error: serviceExists ? CONSTANTS.UI.MSG.SERVICE_EXISTS : null
+        error: serviceExists ? CONSTANTS.UI.MSG.SERVICE_EXISTS : null,
       };
+    }
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_REJECTED`:
       return {
         ...state,
         processing: false,
-        error: parseErrorMsg(action.payload)
+        error: parseErrorMsg(action.payload),
       };
 
     case `${ACTION_TYPES.DELETE_SERVICE}_PENDING`:
       return {
         ...state,
         processing: true,
-        processDesc: CONSTANTS.UI.MSG.DELETING_SERVICE
+        processDesc: CONSTANTS.UI.MSG.DELETING_SERVICE,
       };
     case `${ACTION_TYPES.DELETE_SERVICE}_FULFILLED`:
       return {
         ...state,
-        processing: false
+        processing: false,
       };
     case `${ACTION_TYPES.DELETE_SERVICE}_REJECTED`:
       return {
         ...state,
         processing: false,
-        error: parseErrorMsg(action.payload)
+        error: parseErrorMsg(action.payload),
       };
 
     case `${ACTION_TYPES.FETCH_SERVICES}_PENDING`:
       return {
         ...state,
         processing: true,
-        processDesc: CONSTANTS.UI.MSG.FETCHING_SERVICE
+        processDesc: CONSTANTS.UI.MSG.FETCHING_SERVICE,
       };
     case `${ACTION_TYPES.FETCH_SERVICES}_FULFILLED`:
       return {
         ...state,
-        processing: false
+        processing: false,
       };
     case `${ACTION_TYPES.FETCH_SERVICES}_REJECTED`:
       return {
         ...state,
         processing: false,
-        error: parseErrorMsg(action.payload)
+        error: parseErrorMsg(action.payload),
       };
     case ACTION_TYPES.SEND_MD_REQ:
       return {
@@ -100,7 +100,7 @@ export default function services(state = initState, action) {
         sendAuthReq: false,
         authorisingMD: true,
         processing: true,
-        processDesc: CONSTANTS.UI.MSG.MD_AUTH_WAITING
+        processDesc: CONSTANTS.UI.MSG.MD_AUTH_WAITING,
       };
     case `${ACTION_TYPES.MD_AUTHORISED}_FULFILLED`:
       return {
@@ -108,7 +108,7 @@ export default function services(state = initState, action) {
         authorisingMD: false,
         authorisedMD: true,
         processing: false,
-        processDesc: null
+        processDesc: null,
       };
     case `${ACTION_TYPES.MD_AUTHORISED}_REJECTED`:
       return {
@@ -116,33 +116,33 @@ export default function services(state = initState, action) {
         authorisingMD: false,
         processing: false,
         processDesc: null,
-        error: parseErrorMsg(action.payload)
+        error: parseErrorMsg(action.payload),
       };
     case ACTION_TYPES.CANCEL_MD_REQ:
       return {
         ...state,
-        sendAuthReq: false
+        sendAuthReq: false,
       };
 
     case `${ACTION_TYPES.REMAP_SERVICE}_PENDING`:
       return {
         ...state,
         processing: true,
-        processDesc: CONSTANTS.UI.MSG.REMAPPING_SERVICE
+        processDesc: CONSTANTS.UI.MSG.REMAPPING_SERVICE,
       };
     case `${ACTION_TYPES.REMAP_SERVICE}_FULFILLED`:
       return {
         ...state,
         processing: false,
         processDesc: null,
-        remapped: true
+        remapped: true,
       };
     case `${ACTION_TYPES.REMAP_SERVICE}_REJECTED`:
       return {
         ...state,
         processing: false,
         processDesc: null,
-        error: parseErrorMsg(action.payload)
+        error: parseErrorMsg(action.payload),
       };
     case ACTION_TYPES.RESET:
       return {
@@ -151,7 +151,7 @@ export default function services(state = initState, action) {
         checkedServiceExists: false,
         serviceExists: false,
         remapped: false,
-        authorisedMD: false
+        authorisedMD: false,
       };
     default:
       return state;

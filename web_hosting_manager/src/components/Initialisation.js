@@ -12,7 +12,7 @@ export default class Initialisation extends Component {
     this.state = {
       showPopup: false,
       popupType: CONSTANTS.UI.POPUP_TYPES.ERROR,
-      popupDesc: null
+      popupDesc: null,
     };
   }
 
@@ -37,7 +37,7 @@ export default class Initialisation extends Component {
     const errMsg = err instanceof Error ? err.message : err;
     this.setState({
       showPopup: true,
-      popupDesc: errMsg
+      popupDesc: errMsg,
     });
   }
 
@@ -46,7 +46,7 @@ export default class Initialisation extends Component {
     this.props.reset();
 
     this.setState({
-      showPopup: false
+      showPopup: false,
     });
 
     // move to authorisation page after error popup
@@ -57,17 +57,17 @@ export default class Initialisation extends Component {
     const {
       loading,
       connected,
-      fetchedAccessInfo
+      fetchedAccessInfo,
     } = this.props;
 
     const connectedCn = classNames('i', {
       done: connected,
-      loading: !connected && loading
+      loading: !connected && loading,
     });
 
     const accessCntrCn = classNames('i', {
       done: fetchedAccessInfo,
-      loading: !fetchedAccessInfo && loading
+      loading: !fetchedAccessInfo && loading,
     });
 
     return (
@@ -88,9 +88,6 @@ export default class Initialisation extends Component {
                 <div className="b">
                   <div className={connectedCn}>Connecting to SAFE Network</div>
                   <div className={accessCntrCn}>Fetching Access Container</div>
-                  {/*<div className={publicNamesCn}>Fetching Public Names Container</div>*/}
-                  {/*<div className={publicCntrCn}>Fetching _public Container</div>*/}
-                  {/*<div className={serviceCn}>Preparing Application</div>*/}
                 </div>
               </div>
             </div>
@@ -100,3 +97,15 @@ export default class Initialisation extends Component {
     );
   }
 }
+
+Initialisation.propTypes = {
+  history: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
+  nwState: PropTypes.string.isRequired,
+  error: PropTypes.string.isRequired,
+  loading: PropTypes.bool.isRequired,
+  connected: PropTypes.bool.isRequired,
+  fetchedAccessInfo: PropTypes.bool.isRequired,
+  reconnect: PropTypes.func.isRequired,
+  reset: PropTypes.func.isRequired,
+  initialiseApp: PropTypes.func.isRequired,
+};

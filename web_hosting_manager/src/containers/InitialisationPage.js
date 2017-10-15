@@ -6,7 +6,7 @@ import * as initialisationAction from '../actions/initialisation';
 
 function mapStateToProps(state) {
   return {
-    ...state.initialisation
+    ...state.initialisation,
   };
 }
 

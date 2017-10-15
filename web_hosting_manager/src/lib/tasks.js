@@ -57,65 +57,65 @@ export class FileUploadTask extends Task {
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.open()
-              .then(file => {
-                  return new Promise((resolve, reject) => {
-                     const fd = fs.openSync(this.localPath, 'r');
-                     let offset = 0;
-                     const size = fileStats.size;
-                    let chunkSize = CONSTANTS.UPLOAD_CHUNK_SIZE;
-                    let buffer = null;
-                     const writeFile = (remainingBytes) => {
+          .then(file => {
+            return new Promise((resolve, reject) => {
+              const fd = fs.openSync(this.localPath, 'r');
+              let offset = 0;
+              const size = fileStats.size;
+              let chunkSize = CONSTANTS.UPLOAD_CHUNK_SIZE;
+              let buffer = null;
+              const writeFile = (remainingBytes) => {
 
-                        if(this.cancelled) {
-                          return reject(new Error());
-                        }
+                if (this.cancelled) {
+                  return reject(new Error());
+                }
 
-                        if(remainingBytes < chunkSize) {
-                          chunkSize = remainingBytes;
-                        }
+                if (remainingBytes < chunkSize) {
+                  chunkSize = remainingBytes;
+                }
 
-                         buffer = new Buffer(chunkSize);
-                         fs.readSync(fd, buffer, 0, chunkSize, offset);
-                         return file.write(buffer)
-                              .then(() => {
-                                      offset += chunkSize;
+                buffer = new Buffer(chunkSize);
+                fs.readSync(fd, buffer, 0, chunkSize, offset);
+                return file.write(buffer)
+                  .then(() => {
+                    offset += chunkSize;
 
-                                      remainingBytes -= chunkSize;
+                    remainingBytes -= chunkSize;
 
-                                      if(offset === size) {
-                                        callback(null, {
-                                          isFile: true,
-                                          isCompleted: false,
-                                          size: chunkSize
-                                        });
-                                        return file.close().then(() => resolve(file));
-                                      } else {
-                                        callback(null, {
-                                          isFile: true,
-                                          isCompleted: false,
-                                          size: chunkSize
-                                        })
-                                        return writeFile(remainingBytes);
-                                      }
-                               })
-                               .catch(err => reject(err));
-                     };
-                     writeFile(size);
-                  });
-               })
-              .then((file) => nfs.insert(containerPath.file, file)
-                .catch((err) => {
-                  if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
+                    if (offset === size) {
+                      callback(null, {
+                        isFile: true,
+                        isCompleted: false,
+                        size: chunkSize
+                      });
+                      return file.close().then(() => resolve(file));
+                    } else {
+                      callback(null, {
+                        isFile: true,
+                        isCompleted: false,
+                        size: chunkSize
+                      })
+                      return writeFile(remainingBytes);
+                    }
+                  })
+                  .catch(err => reject(err));
+              };
+              writeFile(size);
+            });
+          })
+          .then((file) => nfs.insert(containerPath.file, file)
+            .catch((err) => {
+              if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
+                return callback(err);
+              }
+              return mdata.get(containerPath.file)
+                .then((value) => {
+                  if (value.buf.length !== 0) {
                     return callback(err);
                   }
-                  return mdata.get(containerPath.file)
-                    .then((value) => {
-                      if (value.buf.length !== 0) {
-                        return callback(err);
-                      }
-                      return nfs.update(containerPath.file, file, value.version + 1);
-                    });
-                }));
+                  return nfs.update(containerPath.file, file, value.version + 1);
+                });
+            }));
       })
       .then(() => {
         return callback(null, {

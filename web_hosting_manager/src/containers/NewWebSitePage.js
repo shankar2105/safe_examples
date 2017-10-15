@@ -5,7 +5,7 @@ import NewWebSite from '../components/NewWebSite';
 
 function mapStateToProps(state) {
   return {
-    nwState: state.initialisation.nwState
+    nwState: state.initialisation.nwState,
   };
 }
 

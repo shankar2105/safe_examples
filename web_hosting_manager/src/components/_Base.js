@@ -9,19 +9,33 @@ import CONSTANTS from '../constants';
 
 export default class Base extends Component {
   render() {
-    const { showAuthReq, error, processing, processDesc } = this.props;
-
+    const {
+      showAuthReq,
+      error,
+      processing,
+      processDesc,
+    } = this.props;
     const rootContainerCn = classNames('root-container-b', {
-      'no-scroll': this.props.scrollableContainer
+      'no-scroll': this.props.scrollableContainer,
     });
 
     const showPopup = showAuthReq || error || processing;
-    const popupDesc = error ? error : processDesc;
-    const popupType = showAuthReq ? CONSTANTS.UI.POPUP_TYPES.AUTH_REQ :
-      (error ? CONSTANTS.UI.POPUP_TYPES.ERROR : CONSTANTS.UI.POPUP_TYPES.LOADING);
+    const popupDesc = error || processDesc;
+    let popupType = CONSTANTS.UI.POPUP_TYPES.AUTH_REQ;
+    if (!showAuthReq) {
+      if (error) {
+        popupType = CONSTANTS.UI.POPUP_TYPES.ERROR;
+      } else {
+        popupType = CONSTANTS.UI.POPUP_TYPES.LOADING;
+      }
+    }
     return (
       <div className="root-b">
-        <Header nwState={this.props.nwState} showOpt={this.props.showHeaderOpts} reconnect={this.props.reconnect}/>
+        <Header
+          nwState={this.props.nwState}
+          showOpt={this.props.showHeaderOpts}
+          reconnect={this.props.reconnect}
+        />
         <div className="root-container">
           <div className={rootContainerCn}>
             {this.props.children}
@@ -41,13 +55,20 @@ export default class Base extends Component {
 
 Base.propTypes = {
   children: PropTypes.element.isRequired,
-  scrollableContainer: PropTypes.bool,
-  showHeaderOpts: PropTypes.bool,
-  showAuthReq: PropTypes.bool,
-  processing: PropTypes.bool,
-  error: PropTypes.string,
-  processDesc: PropTypes.string,
-  nwState: PropTypes.string,
+  scrollableContainer: PropTypes.bool.isRequired,
+  showHeaderOpts: PropTypes.bool.isRequired,
+  showAuthReq: PropTypes.bool.isRequired,
+  processing: PropTypes.bool.isRequired,
+  error: PropTypes.string.isRequired,
+  processDesc: PropTypes.string.isRequired,
+  nwState: PropTypes.string.isRequired,
   popupCancelCb: PropTypes.func,
-  reconnect: PropTypes.func
+  popupOkCb: PropTypes.func.isRequired,
+  reconnect: PropTypes.func.isRequired,
+};
+
+Base.defaultProps = {
+  popupCancelCb: () => {
+    console.warn('Base component - popupCancelCb not defined');
+  },
 };

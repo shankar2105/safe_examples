@@ -74,10 +74,8 @@ class SafeApi {
         if (err[0] === CONSTANTS.AUTH_RES_TYPE.CONTAINERS) {
           return Promise.resolve(CONSTANTS.AUTH_RES_TYPE.CONTAINERS);
         } else if (err[0] === CONSTANTS.AUTH_RES_TYPE.REVOKED) {
-          utils.localAuthInfo.clear();
           return Promise.resolve(CONSTANTS.AUTH_RES_TYPE.REVOKED);
         } else {
-          utils.localAuthInfo.clear();
           return Promise.reject(err);
         }
       });
@@ -162,7 +160,6 @@ class SafeApi {
         );
       })
       .catch((err) => {
-        utils.localAuthInfo.clear();
         return Promise.reject(err);
       });
   }
