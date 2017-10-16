@@ -166,7 +166,7 @@ class SafeApi {
     if (!this.app) {
       return Promise.reject(new Error('Application is not connected.'));
     }
-  
+
     return this.app.auth.refreshContainersPermissions()
       .then(() => (
         Promise.all(Object.keys(CONSTANTS.ACCESS_CONTAINERS).map(cont =>
@@ -542,8 +542,8 @@ class SafeApi {
 
   /**
    * Upload a file or directory
-   * @param {string} localPath - file path on machine
-   * @param {string} networkPath - file path on network
+   * @param {string} localPath file path on machine
+   * @param {string} networkPath file path on network
    * @param {function} progressCallback the progress callback function
    * @param {function} errorCallback the error callback function
    */
@@ -561,8 +561,8 @@ class SafeApi {
 
   /**
    * Download a file
-   * @param {string} networkPath 
-   * @param {function} callback 
+   * @param {string} networkPath - file path on network
+   * @param {function} callback the progress callback function
    */
   fileDownload(networkPath, callback) {
     this.downloader = new Downloader(networkPath, callback);
