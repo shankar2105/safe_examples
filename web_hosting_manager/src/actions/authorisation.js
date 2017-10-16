@@ -24,7 +24,7 @@ const appAuthorised = res => ({
  */
 const mdAuthorised = res => ({
   type: actionTypes.MD_AUTHORISED,
-  payload: api.connectSharedMD(res),
+  payload: api.decodeSharedMD(res),
 });
 
 /**

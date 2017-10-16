@@ -2,6 +2,7 @@ import path from 'path';
 import pkg from '../package.json';
 
 const CONSTANTS = {
+  DEV_ENV: 'development',
   TAG_TYPE: {
     DNS: 15001,
     WWW: 15002,
