@@ -43,12 +43,7 @@ export default class Authorisation extends Component {
                 </p>
                 <p>
                   The Public ID and Services must be added to the <b>_publicNames</b>
-                  container for allowing other applications to collaborate.
-                </p>
-                <p>
-                  Authorisation information will be stored on local keychain.
-                  The local data can be manually cleared from the menu option.
-                  <br /><i>{'File > Clear Access Data'}</i>
+                  &nbsp;container for allowing other applications to collaborate.
                 </p>
               </div>
             </div>

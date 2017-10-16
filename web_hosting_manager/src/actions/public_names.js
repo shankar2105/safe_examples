@@ -1,7 +1,7 @@
 // @flow
 
 /**
- * Actions handling Public IDs
+ * Actions handling Public Names
  */
 /* eslint-disable import/no-named-as-default-member, import/no-named-as-default */
 import api from '../lib/api';
@@ -18,7 +18,7 @@ export const canAccessPublicName = publicName => ({
 });
 
 /**
- * Set Public IDs to application state
+ * Set Public names to application state
  * @param publicNames
  */
 export const setPublicNames = publicNames => ({
@@ -36,7 +36,7 @@ export const setServiceContainers = containers => ({
 });
 
 /**
- * Create new Public ID
+ * Create new Public Name
  * @param publicName
  */
 export const createPublicName = publicName => (

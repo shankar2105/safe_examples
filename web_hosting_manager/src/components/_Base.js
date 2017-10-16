@@ -63,7 +63,7 @@ Base.propTypes = {
   processDesc: PropTypes.string,
   nwState: PropTypes.string.isRequired,
   popupCancelCb: PropTypes.func,
-  popupOkCb: PropTypes.func.isRequired,
+  popupOkCb: PropTypes.func,
   reconnect: PropTypes.func.isRequired,
 };
 
