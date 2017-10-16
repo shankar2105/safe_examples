@@ -2,6 +2,7 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
 import NewWebSite from '../components/NewWebSite';
+import * as commonAction from '../actions/common';
 
 function mapStateToProps(state) {
   return {
@@ -10,7 +11,7 @@ function mapStateToProps(state) {
 }
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators({}, dispatch);
+  return bindActionCreators(commonAction, dispatch);
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(NewWebSite);

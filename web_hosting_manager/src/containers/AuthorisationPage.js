@@ -10,6 +10,8 @@ function mapStateToProps(state) {
     nwState: state.initialisation.nwState,
     authorised: state.authorisation.authorised,
     error: state.authorisation.error,
+    processing: state.authorisation.processing,
+    processDesc: state.authorisation.processDesc,
   };
 }
 

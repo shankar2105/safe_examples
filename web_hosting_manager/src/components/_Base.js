@@ -40,7 +40,7 @@ export default class Base extends Component {
           <div className={rootContainerCn}>
             {this.props.children}
             <Popup
-              show={showPopup}
+              show={!!showPopup}
               type={popupType}
               desc={popupDesc}
               okCb={this.props.popupOkCb}
@@ -55,12 +55,12 @@ export default class Base extends Component {
 
 Base.propTypes = {
   children: PropTypes.element.isRequired,
-  scrollableContainer: PropTypes.bool.isRequired,
-  showHeaderOpts: PropTypes.bool.isRequired,
-  showAuthReq: PropTypes.bool.isRequired,
-  processing: PropTypes.bool.isRequired,
-  error: PropTypes.string.isRequired,
-  processDesc: PropTypes.string.isRequired,
+  scrollableContainer: PropTypes.bool,
+  showHeaderOpts: PropTypes.bool,
+  showAuthReq: PropTypes.bool,
+  processing: PropTypes.bool,
+  error: PropTypes.string,
+  processDesc: PropTypes.string,
   nwState: PropTypes.string.isRequired,
   popupCancelCb: PropTypes.func,
   popupOkCb: PropTypes.func.isRequired,
@@ -68,6 +68,15 @@ Base.propTypes = {
 };
 
 Base.defaultProps = {
+  scrollableContainer: false,
+  showHeaderOpts: false,
+  showAuthReq: false,
+  processing: false,
+  error: '',
+  processDesc: '',
+  popupOkCb: () => {
+    console.warn('Base component - popupCancelCb not defined');
+  },
   popupCancelCb: () => {
     console.warn('Base component - popupCancelCb not defined');
   },

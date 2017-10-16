@@ -114,11 +114,5 @@ Popup.propTypes = {
   type: PropTypes.string.isRequired,
   desc: PropTypes.string.isRequired,
   okCb: PropTypes.func.isRequired,
-  cancelCb: PropTypes.func,
-};
-
-Popup.defaultProps = {
-  cancelCb: () => {
-    console.warn('Popup component :: cancelCb not implemented');
-  },
+  cancelCb: PropTypes.func.isRequired,
 };

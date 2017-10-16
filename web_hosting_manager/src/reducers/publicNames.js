@@ -35,7 +35,7 @@ export default function publicNamesList(state = initState, action) {
         ...state,
         processing: false,
         createdPublicName: true,
-        processDesc: null,
+        processDesc: '',
       };
     case `${actionTypes.CREATE_PUBLIC_NAME}_REJECTED`:
       return {
@@ -54,7 +54,7 @@ export default function publicNamesList(state = initState, action) {
       return {
         ...state,
         processing: false,
-        processDesc: null,
+        processDesc: '',
       };
     case `${actionTypes.FETCH_SERVICE_CONTAINERS}_REJECTED`:
       return {

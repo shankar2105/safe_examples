@@ -11,7 +11,7 @@ export default class NewPublicName extends Component {
   constructor() {
     super();
     this.state = {
-      error: null,
+      error: '',
     };
   }
 

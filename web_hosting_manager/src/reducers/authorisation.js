@@ -10,10 +10,15 @@ const initState = {
 
 export default function authorisation(state = initState, action) {
   switch (action.type) {
-    case `${actionTypes.SEND_AUTH_REQUEST}_FULFILLED`:
+    case `${actionTypes.SEND_AUTH_REQUEST}_PENDING`:
       return {
         ...state,
         processing: true,
+      };
+    case `${actionTypes.SEND_AUTH_REQUEST}_FULFILLED`:
+      return {
+        ...state,
+        processing: false,
       };
     case `${actionTypes.SEND_AUTH_REQUEST}_REJECTED`:
       return {
@@ -27,7 +32,7 @@ export default function authorisation(state = initState, action) {
         ...state,
         processing: false,
         authorised: !!authRes,
-        error: null,
+        error: '',
         authRes,
       };
     }

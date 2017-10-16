@@ -25,14 +25,14 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: false,
-        processDesc: null,
+        processDesc: '',
         sendAuthReq: false,
       };
     case `${ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME}_REJECTED`:
       return {
         ...state,
         processing: false,
-        processDesc: null,
+        processDesc: '',
         sendAuthReq: true,
       };
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_PENDING`:
@@ -48,8 +48,8 @@ export default function services(state = initState, action) {
         processing: false,
         serviceExists,
         checkedServiceExists: true,
-        processDesc: null,
-        error: serviceExists ? CONSTANTS.UI.MSG.SERVICE_EXISTS : null,
+        processDesc: '',
+        error: serviceExists ? CONSTANTS.UI.MSG.SERVICE_EXISTS : '',
       };
     }
     case `${ACTION_TYPES.CHECK_SERVICE_EXIST}_REJECTED`:
@@ -108,14 +108,14 @@ export default function services(state = initState, action) {
         authorisingMD: false,
         authorisedMD: true,
         processing: false,
-        processDesc: null,
+        processDesc: '',
       };
     case `${ACTION_TYPES.MD_AUTHORISED}_REJECTED`:
       return {
         ...state,
         authorisingMD: false,
         processing: false,
-        processDesc: null,
+        processDesc: '',
         error: parseErrorMsg(action.payload),
       };
     case ACTION_TYPES.CANCEL_MD_REQ:
@@ -134,14 +134,14 @@ export default function services(state = initState, action) {
       return {
         ...state,
         processing: false,
-        processDesc: null,
+        processDesc: '',
         remapped: true,
       };
     case `${ACTION_TYPES.REMAP_SERVICE}_REJECTED`:
       return {
         ...state,
         processing: false,
-        processDesc: null,
+        processDesc: '',
         error: parseErrorMsg(action.payload),
       };
     case ACTION_TYPES.RESET:

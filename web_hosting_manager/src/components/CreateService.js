@@ -12,7 +12,7 @@ export default class CreateService extends Component {
   constructor() {
     super();
     this.state = {
-      error: null,
+      error: '',
     };
   }
   componentWillMount() {
@@ -65,7 +65,7 @@ export default class CreateService extends Component {
         error: CONSTANTS.UI.ERROR_MSG.INVALID_SERVICE_NAME,
       });
     }
-    this.setState({ error: null });
+    this.setState({ error: '' });
 
     this.props.checkServiceExists(publicName, serviceName);
   }

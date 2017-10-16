@@ -194,7 +194,11 @@ export default class CreateServiceContainer extends Component {
 CreateServiceContainer.propTypes = {
   history: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   match: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
-  containerInfo: PropTypes.arrayOf(PropTypes.string).isRequired,
+  containerInfo: PropTypes.arrayOf(PropTypes.shape({
+    isFile: PropTypes.bool.isRequired,
+    name: PropTypes.string.isRequired,
+    size: PropTypes.number,
+  })).isRequired,
   processDesc: PropTypes.string.isRequired,
   error: PropTypes.string.isRequired,
   nwState: PropTypes.string.isRequired,

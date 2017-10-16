@@ -8,7 +8,7 @@ const initState = {
   connected: false,
   fetchedAccessInfo: false,
   loading: false,
-  error: null,
+  error: '',
 };
 
 export default function initialisation(state = initState, action) {
