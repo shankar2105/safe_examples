@@ -49,7 +49,7 @@ export const receiveResponse = uri => (
     }
 
     // handle app auth request
-    const isAuthorising = currentState.authorisation.processing;
+    const isAuthorising = currentState.authorisation.authorising;
     if (isAuthorising) {
       return dispatch(appAuthorised(uri));
     }
