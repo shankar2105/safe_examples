@@ -126,5 +126,3 @@ export const generateUploadTaskQueue = (localPath, networkPath, callback, baseDi
   }
   return taskQueue;
 };
-
-export const openExternal = url => shell.openExternal(parseUrl(url));

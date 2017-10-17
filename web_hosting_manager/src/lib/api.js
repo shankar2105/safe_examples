@@ -41,8 +41,8 @@ class SafeApi {
    */
   sendAuthReq() {
     return safeApp.initializeApp(this.APP_INFO.data, null, { libPath })
-      .then(app => app.auth.genAuthUri(this.APP_INFO.permissions, this.APP_INFO.opt))
-      .then(res => utils.openExternal(res.uri));
+      .then(app => app.auth.genAuthUri(this.APP_INFO.permissions, this.APP_INFO.opt)
+        .then(res => app.auth.openUri(res.uri)));
   }
 
   /**
@@ -51,7 +51,7 @@ class SafeApi {
    */
   sendMDReq(mdList) {
     return this.app.auth.genShareMDataUri(mdList)
-      .then(res => utils.openExternal(res.uri));
+      .then(res => this.app.auth.openUri(res.uri));
   }
 
   /**
