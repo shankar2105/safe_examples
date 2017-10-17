@@ -11,7 +11,6 @@ import { I18n } from 'react-redux-i18n';
 
 import Uploader from './Uploader';
 import Downloader from './Downloader';
-import * as utils from './utils';
 import CONSTANTS from '../constants';
 
 const nodeEnv = process.env.NODE_ENV || CONSTANTS.DEV_ENV;

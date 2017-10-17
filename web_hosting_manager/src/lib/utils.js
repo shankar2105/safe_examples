@@ -1,4 +1,3 @@
-import { shell } from 'electron';
 import fs from 'fs';
 import { I18n } from 'react-redux-i18n';
 
@@ -59,8 +58,6 @@ export class DirStats {
     this.directories = 0;
   }
 }
-
-const parseUrl = url => ((url.indexOf('safe-auth://') === -1) ? url.replace('safe-auth:', 'safe-auth://') : url);
 
 export const getDirectoryStats = (localPath) => {
   let stat;
