@@ -11,26 +11,33 @@ import { I18n } from 'react-redux-i18n';
 
 import Uploader from './Uploader';
 import Downloader from './Downloader';
+import makeError from './_error';
 import CONSTANTS from '../constants';
-import { openExternal } from './utils';
+import { openExternal, nodeEnv } from './utils';
 
-const nodeEnv = process.env.NODE_ENV || CONSTANTS.DEV_ENV;
-
-let libPath;
-
-if (nodeEnv === CONSTANTS.DEV_ENV) {
-  libPath = CONSTANTS.DEV_LIB_PATH;
-} else {
-  libPath = CONSTANTS.ASAR_LIB_PATH;
-}
+// Private variables
+const _app = Symbol('app');
+const _publicNames = Symbol('publicNames');
+const _appInfo = Symbol('appInfo');
+const _uploader = Symbol('uploader');
+const _downloader = Symbol('downloader');
+const _libPath = Symbol('libPath');
 
 class SafeApi {
   constructor() {
-    this.app = null;
-    this.APP_INFO = CONSTANTS.APP_INFO;
-    this.publicNames = {};
-    this.uploader = null;
-    this.downloader = null;
+    this[_app] = null;
+    this[_publicNames] = {};
+    this[_appInfo] = CONSTANTS.APP_INFO;
+    this[_uploader] = null;
+    this[_downloader] = null;
+    this[_libPath] = CONSTANTS.ASAR_LIB_PATH;
+    if ((nodeEnv === CONSTANTS.ENV.DEV) || (nodeEnv === CONSTANTS.ENV.TEST)) {
+      this[_libPath] = CONSTANTS.DEV_LIB_PATH;
+    }
+  }
+
+  get app() {
+    return this[_app];
   }
 
   /**
@@ -40,9 +47,20 @@ class SafeApi {
    * - Send URI to Authenticator
    */
   sendAuthReq() {
-    return safeApp.initializeApp(this.APP_INFO.data, null, { libPath })
-      .then(app => app.auth.genAuthUri(this.APP_INFO.permissions, this.APP_INFO.opt))
-      .then(res => openExternal(res.uri));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const app = await safeApp.initializeApp(
+          this[_appInfo].data,
+          null,
+          { libPath: this[_libPath] },
+        );
+        const resp = await app.auth.genAuthUri(this[_appInfo].permissions, this[_appInfo].opt);
+        openExternal(resp.uri);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -50,8 +68,15 @@ class SafeApi {
    * @param {Array} mdList array of Mutable Data with permissions
    */
   sendMDReq(mdList) {
-    return this.app.auth.genShareMDataUri(mdList)
-      .then(res => openExternal(res.uri));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const resp = await this[_app].auth.genShareMDataUri(mdList);
+        openExternal(resp.uri);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -59,11 +84,19 @@ class SafeApi {
    * This creates a test login for development purpose
    */
   authoriseMock() {
-    return safeApp.initializeApp(this.APP_INFO.data, null, { libPath })
-      .then(app => app.auth.loginForTest(this.APP_INFO.permissions))
-      .then((app) => {
-        this.app = app;
-      });
+    return new Promise(async (resolve, reject) => {
+      try {
+        this[_app] = await safeApp.initializeApp(
+          this[_appInfo].data,
+          null,
+          { libPath: this[_libPath] },
+        );
+        await this[_app].auth.loginForTest(this[_appInfo].permissions);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -72,34 +105,44 @@ class SafeApi {
    */
   authoriseMD(publicName) {
     const reqArr = [];
-    return this.getPublicNamesContainer()
-      .then(md => this.getMDataValueForKey(md, publicName))
-      .then((pubXORName) => {
-        // add publicname MD to request array
+    return new Promise(async (resolve, reject) => {
+      if (!publicName) {
+        return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_PUBLIC_NAME, 'Invalid publicName'));
+      }
+
+      try {
+        const pubNamesCntr = await this.getPublicNamesContainer();
+        const servCntrName = await this.getMDataValueForKey(pubNamesCntr, publicName);
+
+        // Add service container to request array
         reqArr.push({
-          type_tag: CONSTANTS.TAG_TYPE.DNS,
-          name: pubXORName,
+          type_tag: CONSTANTS.TYPE_TAG.DNS,
+          name: servCntrName,
           perms: ['Insert', 'Update', 'Delete'],
         });
 
-        return this.app.mutableData.newPublic(pubXORName, CONSTANTS.TAG_TYPE.DNS)
-          .then(publicMd => publicMd.getEntries())
-          .then(entries => entries.forEach((key, val) => {
-            const service = key.toString();
-            // check service is not an email or deleted
-            if ((service.indexOf('@email') !== -1) || (val.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
-              return;
-            }
-            reqArr.push({
-              type_tag: CONSTANTS.TAG_TYPE.WWW,
-              name: val.buf,
-              perms: ['Insert', 'Update', 'Delete'],
-            });
-          }))
-          .then(() => {
-            this.sendMDReq(reqArr);
+        const servCntr = await this.getPublicNameMD(servCntrName);
+        const services = await servCntr.getEntries();
+        await services.forEach((key, val) => {
+          const service = key.toString();
+
+          // check service is not an email or deleted
+          if ((service.indexOf(CONSTANTS.MD_EMAIL_PREFIX) !== -1)
+            || (val.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
+            return;
+          }
+          reqArr.push({
+            type_tag: CONSTANTS.TYPE_TAG.WWW,
+            name: val.buf,
+            perms: ['Insert', 'Update', 'Delete'],
           });
-      });
+        });
+        await this.sendMDReq(reqArr);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -109,26 +152,33 @@ class SafeApi {
    * @param {*} nwStateChangeCb callback function to handle network state change
    */
   connect(uri, nwStateChangeCb) {
-    const authInfo = uri;
-    if (!authInfo) {
-      return Promise.reject(new Error('Missing Authorisation information.'));
-    }
-    if (authInfo === CONSTANTS.MOCK_RES_URI) {
-      return Promise.resolve();
-    }
-    return safeApp.fromAuthURI(this.APP_INFO.data, authInfo, nwStateChangeCb, { libPath })
-      .then((app) => {
+    return new Promise(async (resolve, reject) => {
+      if (!uri) {
+        return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_AUTH_RESP, 'Invalid Auth response'));
+      }
+
+      // Handle Mock response
+      if (uri === CONSTANTS.MOCK_RES_URI) {
+        return resolve(true);
+      }
+
+      try {
+        const app = await safeApp.fromAuthURI(
+          this[_appInfo].data,
+          uri,
+          nwStateChangeCb,
+          { libPath: this[_libPath] },
+        );
+
+        // Send network connected state
         nwStateChangeCb(CONSTANTS.NETWORK_STATE.CONNECTED);
-        this.app = app;
-      })
-      .catch((err) => {
-        if (err[0] === CONSTANTS.AUTH_RES_TYPE.CONTAINERS) {
-          return Promise.resolve(CONSTANTS.AUTH_RES_TYPE.CONTAINERS);
-        } else if (err[0] === CONSTANTS.AUTH_RES_TYPE.REVOKED) {
-          return Promise.resolve(CONSTANTS.AUTH_RES_TYPE.REVOKED);
-        }
-        return Promise.reject(err);
-      });
+
+        this[_app] = app;
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -136,118 +186,65 @@ class SafeApi {
    * @param {string} resUri the safe response URI of Shared Mutable Data
    */
   decodeSharedMD(resUri) {
-    return safeApp.fromAuthURI(this.APP_INFO.data, resUri, { libPath })
-      .then(() => {
-        console.warn('connected with MD');
-      });
+    return new Promise(async (resolve, reject) => {
+      if (!resUri) {
+        return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SHARED_MD_RESP,
+          'Invalid Shared Mutable Data Auth response'));
+      }
+      try {
+        await safeApp.fromAuthURI(
+          this[_appInfo].data,
+          resUri,
+          { libPath: this[_libPath] },
+        );
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
    * Reconnect the application with SAFE Network when disconnected
    */
   reconnect() {
-    return this.app.reconnect();
+    if (!this[_app]) {
+      return Promise.reject(makeError(CONSTANTS.APP_ERR_CODE.APP_NOT_INITIALISED,
+        'Application not initialised'));
+    }
+    return this[_app].reconnect();
   }
 
   /**
    * Open application log file generated by SAFE-app library
    */
   openLogFile() {
-    if (!this.app) {
-      return;
+    if (!this[_app]) {
+      return Promise.reject(makeError(CONSTANTS.APP_ERR_CODE.APP_NOT_INITIALISED,
+        'Application not initialised'));
     }
-    this.app.logPath().then(shell.openItem);
+    this[_app].logPath().then(shell.openItem);
   }
 
   /**
    * Check application has access to containers requested.
    */
   canAccessContainers() {
-    if (!this.app) {
-      return Promise.reject(new Error('Application is not connected.'));
-    }
-
-    return this.app.auth.refreshContainersPermissions()
-      .then(() => (
-        Promise.all(Object.keys(CONSTANTS.ACCESS_CONTAINERS).map(cont =>
-          this.app.auth.canAccessContainer(CONSTANTS.ACCESS_CONTAINERS[cont])))
-      ))
-      .catch(err => Promise.reject(err));
-  }
-
-  /**
-   * Fetch Public Names under _publicNames container
-   * @return {Promise<[PublicNames]>} array of Public Names
-   */
-  fetchPublicNames() {
-    const self = this;
-    return this.getPublicNamesContainer()
-      .then(md => md.getKeys()
-        .then(keys => keys.len()
-          .then((keysLen) => {
-            if (keysLen === 0) {
-              console.warn('No Public Names found');
-              return;
-            }
-            const encPublicNames = [];
-            return keys.forEach((key) => {
-              encPublicNames.push(key);
-            }).then(() => Promise.all(encPublicNames.map(key => (
-              md.decrypt(key)
-                .then((decKey) => {
-                  const decPubId = decKey.toString();
-                  if (decPubId === CONSTANTS.MD_META_KEY) {
-                    return;
-                  }
-                  if (!self.publicNames[decPubId] || typeof self.publicNames[decPubId] !== 'object') {
-                    self.publicNames[decPubId] = {};
-                  }
-                })
-                .catch((err) => {
-                  // FIXME shankar - to be removed once
-                  // symmetric decipher failure for unknown key decryption fixed.
-                  if (err.code === CONSTANTS.ERROR_CODE.SYMMETRIC_DECIPHER_FAILURE) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(err);
-                })
-            ))));
-          })))
-      .then(() => (self.publicNames));
-  }
-
-  /**
-   * Fetch services registered unders all the Public Names
-   * @return {Promise<[PublicNames]>} array of Public Names with services
-   */
-  fetchServices() {
-    const self = this;
-    const publicNames = Object.getOwnPropertyNames(this.publicNames);
-    return Promise.all(publicNames.map((publicName) => {
-      const services = {};
-      return this.getPublicNamesContainer()
-        .then(md => this.getMDataValueForKey(md, publicName))
-        .then(value => this.app.mutableData.newPublic(value, CONSTANTS.TAG_TYPE.DNS))
-        .then(md => md.getEntries()
-          .then(entries => entries.forEach((key, val) => {
-            const service = key.toString();
-            // check service is not an email or deleted
-            if ((service.indexOf('@email') !== -1) || (val.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
-              return;
-            }
-            services[service] = val;
-          })))
-        .then(() => Promise.all(Object.keys(services).map(service => (
-          self._getServicePath(services[service])
-            .then((servicePath) => {
-              services[service] = servicePath;
-            })
-        ))))
-        .then(() => {
-          self.publicNames[publicName] = services;
-        })
-        .catch(Promise.reject);
-    })).then(() => (self.publicNames));
+    return new Promise(async (resolve, reject) => {
+      if (!this[_app]) {
+        return Promise.reject(makeError(CONSTANTS.APP_ERR_CODE.APP_NOT_INITIALISED,
+          'Application not initialised'));
+      }
+      try {
+        await this[_app].auth.refreshContainersPermissions();
+        const accessContainers = Object.keys(CONSTANTS.ACCESS_CONTAINERS);
+        await Promise.all(accessContainers.map(cont =>
+          this[_app].auth.canAccessContainer(CONSTANTS.ACCESS_CONTAINERS[cont])));
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -258,24 +255,112 @@ class SafeApi {
    * @param {string} publicName the public name
    */
   createPublicName(publicName) {
-    const name = publicName.trim();
-    if (!name) {
-      // FIXME correct error message to public name
-      const err = new Error(I18n.t('messages.cannotBeEmpty', { name: 'Public Id' }));
-      return Promise.reject(err);
-    }
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!publicName) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_PUBLIC_NAME, 'Invalid publicName'));
+        }
+        const name = publicName.trim();
+        const metaName = `Services container for: ${name}`;
+        const metaDesc = `Container where all the services are mapped for the Public Name: ${name}`;
+        const hashedName = await this[_app].crypto.sha3Hash(name);
 
-    const metaName = `Services container for: ${name}`;
-    const metaDesc = `Container where all the services are mapped for the Public Name: ${name}`;
+        const servCntr = await this.getPublicNameMD(hashedName);
+        await servCntr.quickSetup({}, metaName, metaDesc);
+        const pubNamesCntr = await this.getPublicNamesContainer();
+        await this._insertToMData(pubNamesCntr, name, hashedName, true);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
 
-    return this.app.crypto.sha3Hash(name)
-      .then(hashedName => this.app.mutableData.newPublic(hashedName, CONSTANTS.TAG_TYPE.DNS))
-      .then(md => (
-        md.quickSetup({}, metaName, metaDesc)
-          .then(() => md.getNameAndTag())
-          .then(mdMeta => this.getPublicNamesContainer()
-            .then(pubMd => this._insertToMData(pubMd, name, mdMeta.name, true)))
-      ));
+  /**
+   * Fetch Public Names under _publicNames container
+   * @return {Promise<[PublicNames]>} array of Public Names
+   */
+  fetchPublicNames() {
+    const self = this;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicNamesMd = await this.getPublicNamesContainer();
+        const keys = await publicNamesMd.getKeys();
+        const keysLen = await keys.len();
+        if (keysLen === 0) {
+          console.warn('No Public Names found');
+          return;
+        }
+        const encPublicNames = [];
+        await keys.forEach((key) => {
+          encPublicNames.push(key);
+        });
+        await Promise.all(encPublicNames.map(key => (
+          publicNamesMd.decrypt(key)
+            .then((decKey) => {
+              const decPubId = decKey.toString();
+              if (decPubId === CONSTANTS.MD_META_KEY) {
+                return;
+              }
+              if (!self[_publicNames][decPubId] || typeof self[_publicNames][decPubId] !== 'object') {
+                self[_publicNames][decPubId] = {};
+              }
+            })
+            .catch((err) => {
+              // FIXME shankar - to be removed once
+              // symmetric decipher failure for unknown key decryption fixed.
+              if (err.code === CONSTANTS.ERROR_CODE.SYMMETRIC_DECIPHER_FAILURE) {
+                return resolve(true);
+              }
+              return reject(err);
+            })
+        )));
+        resolve(this[_publicNames]);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Fetch services registered unders all the Public Names
+   * @return {Promise<[PublicNames]>} array of Public Names with services
+   */
+  fetchServices() {
+    const self = this;
+    const publicNames = Object.getOwnPropertyNames(this[_publicNames]);
+    return new Promise(async (resolve, reject) => {
+      try {
+        await Promise.all(publicNames.map((publicName) => {
+          const services = {};
+          return this.getPublicNamesContainer()
+            .then(md => this.getMDataValueForKey(md, publicName))
+            .then(value => this[_app].mutableData.newPublic(value, CONSTANTS.TYPE_TAG.DNS))
+            .then(md => md.getEntries()
+              .then(entries => entries.forEach((key, val) => {
+                const service = key.toString();
+                // check service is not an email or deleted
+                if ((service.indexOf('@email') !== -1) || (val.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
+                  return;
+                }
+                services[service] = val;
+              })))
+            .then(() => Promise.all(Object.keys(services).map(service => (
+              self._getServicePath(services[service])
+                .then((servicePath) => {
+                  services[service] = servicePath;
+                })
+            ))))
+            .then(() => {
+              self[_publicNames][publicName] = services;
+            })
+            .catch(Promise.reject);
+        }));
+        resolve(this[_publicNames]);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -290,26 +375,38 @@ class SafeApi {
    * @param {Buffer} pathXORName XORName of service Mutable Data
    */
   createService(publicName, serviceName, pathXORName) {
-    if (!publicName) {
-      return Promise.reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Public Id' })));
-    }
-    if (!serviceName) {
-      return Promise.reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Service' })));
-    }
-    if (!pathXORName) {
-      return Promise.reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Container path' })));
-    }
-
-    return this.getPublicNamesContainer()
-      .then(md => this.getMDataValueForKey(md, publicName))
-      .then(decVal => this.app.mutableData.newPublic(decVal, CONSTANTS.TAG_TYPE.DNS))
-      .then(md => this._insertToMData(md, serviceName, pathXORName)
-        .catch((err) => {
-          if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
-            return Promise.reject(err);
+    return new Promise(async (resolve, reject) => {
+      if (!publicName) {
+        return reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Public Id' })));
+      }
+      if (!serviceName) {
+        return reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Service' })));
+      }
+      if (!pathXORName) {
+        return reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Container path' })));
+      }
+      let publicNameMd;
+      try {
+        const publicNamesMd = await this.getPublicNamesContainer();
+        const decVal = await this.getMDataValueForKey(publicNamesMd, publicName);
+        publicNameMd = await this[_app].mutableData.newPublic(decVal, CONSTANTS.TYPE_TAG.DNS);
+        await this._insertToMData(publicNameMd, serviceName, pathXORName);
+        resolve(true);
+      } catch (err) {
+        if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
+          return reject(err);
+        }
+        try {
+          await this._updateMDataKey(publicNameMd, serviceName, pathXORName, true);
+        } catch (e) {
+          if (!e.code) {
+            return reject(err);
           }
-          return this._updateMDataKey(md, serviceName, pathXORName);
-        }));
+          return reject(e);
+        }
+        resolve(true);
+      }
+    });
   }
 
   /**
@@ -320,10 +417,16 @@ class SafeApi {
    * @param {string} serviceName the service name to delete
    */
   deleteService(publicName, serviceName) {
-    return this.app.crypto.sha3Hash(publicName)
-      .then(hashedPubName =>
-        this.app.mutableData.newPublic(hashedPubName, CONSTANTS.TAG_TYPE.DNS))
-      .then(md => this._removeFromMData(md, serviceName));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const hashedPubName = await this[_app].crypto.sha3Hash(publicName);
+        const publicNameMd = await this.getPublicNameMD(hashedPubName);
+        await this._removeFromMData(publicNameMd, serviceName);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -338,7 +441,7 @@ class SafeApi {
   createServiceContainer(servicePath, metaFor) {
     const metaName = `Service Root Directory for: ${metaFor}`;
     const metaDesc = `Has the files hosted for the service: ${metaFor}`;
-    return this.app.mutableData.newRandomPublic(CONSTANTS.TAG_TYPE.WWW)
+    return this[_app].mutableData.newRandomPublic(CONSTANTS.TYPE_TAG.WWW)
       .then(md => md.quickSetup({}, metaName, metaDesc).then(() => md.getNameAndTag()))
       .then(mdMeta => this.getPublicContainer()
         .then(pubMd => this._insertToMData(pubMd, servicePath, mdMeta.name))
@@ -350,10 +453,17 @@ class SafeApi {
    * @param {string} publicName the public name
    */
   checkPublicNameAccessible(publicName) {
-    return this.getPublicNamesContainer()
-      .then(md => this.getMDataValueForKey(md, publicName))
-      .then(decVal => this.app.mutableData.newPublic(decVal, CONSTANTS.TAG_TYPE.DNS))
-      .then(md => this._checkMDAccessible(md));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicNamesMd = await this.getPublicNamesContainer();
+        const decVal = await this.getMDataValueForKey(publicNamesMd, publicName);
+        const publicNameMd = await this[_app].mutableData.newPublic(decVal, CONSTANTS.TYPE_TAG.DNS);
+        await this._checkMDAccessible(publicNameMd);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -362,20 +472,24 @@ class SafeApi {
    */
   getPublicContainerKeys() {
     const publicKeys = [];
-    return this.getPublicContainer()
-      .then(pubMd => pubMd.getKeys())
-      .then(keys => keys.len()
-        .then((len) => {
-          if (len === 0) {
-            return Promise.resolve([]);
-          }
-          return keys.forEach((key) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicMd = await this.getPublicContainer();
+        const keys = await publicMd.getKeys();
+        const len = await keys.len();
+        if (len !== 0) {
+          await keys.forEach((key) => {
             if (!key) {
               return;
             }
             publicKeys.unshift(key.toString());
-          }).then(() => publicKeys);
-        }));
+          });
+        }
+        resolve(publicKeys);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -391,41 +505,48 @@ class SafeApi {
       containerKey = containerKey.slice(1);
     }
 
-    const deleteFiles = (nfs, files) => {
-      if (files.length === 0) {
-        return;
-      }
-      const file = files[0];
-      return nfs.fetch(file.key)
-        .then(f => nfs.delete(file.key, f.version + 1))
-        .then(() => {
+    const deleteFiles = (nfs, files) => (
+      new Promise(async (resolve, reject) => {
+        try {
+          if (files.length === 0) {
+            return resolve(true);
+          }
+          const file = files[0];
+          const f = await nfs.fetch(file.key);
+          await nfs.delete(file.key, f.version + 1);
           files.shift();
-          return deleteFiles(nfs, files);
-        });
-    };
+          await deleteFiles(nfs, files);
+          resolve(true);
+        } catch (err) {
+          reject(err);
+        }
+      })
+    );
 
-    return this.getPublicContainer()
-      .then(pubMd => (
-        this.getMDataValueForKey(pubMd, containerName)
-          .then(val => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
-          .then((dirMd) => {
-            const fileKeys = [];
-            return dirMd.getEntries()
-              .then(entries => entries.forEach((key, val) => {
-                const keyStr = key.toString();
-                if ((keyStr.indexOf(containerKey) !== 0) || keyStr === CONSTANTS.MD_META_KEY) {
-                  return;
-                }
-                if (val.buf.length === 0) {
-                  return;
-                }
-                fileKeys.push({ key: keyStr, version: val.version });
-              }).then(() => {
-                const nfs = dirMd.emulateAs('NFS');
-                return deleteFiles(nfs, fileKeys);
-              }));
-          })
-      ));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicMd = await this.getPublicContainer();
+        const value = await this.getMDataValueForKey(publicMd, containerName);
+        const dirMd = await this[_app].mutableData.newPublic(value, CONSTANTS.TYPE_TAG.WWW);
+        const fileKeys = [];
+        const entries = await dirMd.getEntries();
+        await entries.forEach((key, val) => {
+          const keyStr = key.toString();
+          if ((keyStr.indexOf(containerKey) !== 0) || keyStr === CONSTANTS.MD_META_KEY) {
+            return;
+          }
+          if (val.buf.length === 0) {
+            return;
+          }
+          fileKeys.push({ key: keyStr, version: val.version });
+        });
+        const nfs = dirMd.emulateAs('NFS');
+        await deleteFiles(nfs, fileKeys);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -436,14 +557,19 @@ class SafeApi {
    * @param {string} sericePath service path to which the service to be remapped
    */
   remapService(publicName, serviceName, sericePath) {
-    return this.getPublicContainer()
-      .then(pubMd => this.getMDataValueForKey(pubMd, sericePath))
-      .then(containerVal => (
-        this.getPublicNamesContainer()
-          .then(pnMd => this.getMDataValueForKey(pnMd, publicName))
-          .then(pnVal => this.app.mutableData.newPublic(pnVal, CONSTANTS.TAG_TYPE.DNS))
-          .then(md => this._updateMDataKey(md, serviceName, containerVal))
-      ));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicMd = await this.getPublicContainer();
+        const containerVal = await this.getMDataValueForKey(publicMd, sericePath);
+        const publicNamesMd = await this.getPublicNamesContainer();
+        const pnVal = await this.getMDataValueForKey(publicNamesMd, publicName);
+        const md = await this[_app].mutableData.newPublic(pnVal, CONSTANTS.TYPE_TAG.DNS);
+        await this._updateMDataKey(md, serviceName, containerVal);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -452,52 +578,57 @@ class SafeApi {
    * @param {string} sericePath path to service mutable data
    */
   getServiceContainer(sericePath) {
-    return this.getPublicContainer()
-      .then(md => this.getMDataValueForKey(md, sericePath.split('/').slice(0, 3).join('/')))
-      .then(val => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
-      .then((serMd) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicMd = await this.getPublicContainer();
+        const value = await this.getMDataValueForKey(publicMd, sericePath.split('/').slice(0, 3).join('/'));
+        const serMd = await this[_app].mutableData.newPublic(value, CONSTANTS.TYPE_TAG.WWW);
         const files = [];
         const result = [];
         const rootName = sericePath.split('/').slice(3).join('/');
-        return this._checkMDAccessible(serMd).then(() => serMd.getEntries())
-          .then(entries => entries.forEach((key, val) => {
-            if (val.buf.length === 0) {
-              return;
+        await this._checkMDAccessible(serMd);
+        const entries = await serMd.getEntries();
+        await entries.forEach((key, val) => {
+          if (val.buf.length === 0) {
+            return;
+          }
+          const keyStr = key.toString();
+          if ((rootName && (keyStr.indexOf(rootName) !== 0))
+            || keyStr === CONSTANTS.MD_META_KEY) {
+            return;
+          }
+          let keyStrTrimmed = keyStr;
+          if (rootName.length > 0) {
+            keyStrTrimmed = keyStr.substr(rootName.length + 1);
+          }
+          if (keyStrTrimmed.split('/').length > 1) {
+            const dirName = keyStrTrimmed.split('/')[0];
+            if (result.filter(file => (file.name === dirName)).length === 0) {
+              return result.unshift({ isFile: false, name: dirName });
             }
-            const keyStr = key.toString();
-            if ((rootName && (keyStr.indexOf(rootName) !== 0))
-              || keyStr === CONSTANTS.MD_META_KEY) {
-              return;
-            }
-            let keyStrTrimmed = keyStr;
-            if (rootName.length > 0) {
-              keyStrTrimmed = keyStr.substr(rootName.length + 1);
-            }
-            if (keyStrTrimmed.split('/').length > 1) {
-              const dirName = keyStrTrimmed.split('/')[0];
-              if (result.filter(file => (file.name === dirName)).length === 0) {
-                return result.unshift({ isFile: false, name: dirName });
-              }
-              return;
-            }
-            files.unshift(keyStr);
-          })).then(() => {
-            const nfs = serMd.emulateAs('NFS');
-            return Promise.all(files.map(file => (
-              nfs.fetch(file)
-                .then(f => nfs.open(f, CONSTANTS.FILE_OPEN_MODE.OPEN_MODE_READ))
-                .then(f => f.size())
-                .then((size) => {
-                  const dirName = sericePath.split('/').slice(3).join('/');
-                  result.unshift({
-                    isFile: true,
-                    name: dirName ? file.substr(dirName.length + 1) : file,
-                    size,
-                  });
-                })
-            ))).then(() => result);
-          });
-      });
+            return;
+          }
+          files.unshift(keyStr);
+        });
+        const nfs = serMd.emulateAs('NFS');
+        await Promise.all(files.map(file => (
+          nfs.fetch(file)
+            .then(f => nfs.open(f, CONSTANTS.FILE_OPEN_MODE.OPEN_MODE_READ))
+            .then(f => f.size())
+            .then((size) => {
+              const dirName = sericePath.split('/').slice(3).join('/');
+              result.unshift({
+                isFile: true,
+                name: dirName ? file.substr(dirName.length + 1) : file,
+                size,
+              });
+            })
+        )));
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -505,10 +636,17 @@ class SafeApi {
    * @param {string} servicePath path to service mutable data
    */
   getServiceContainerMeta(servicePath) {
-    return this.getPublicContainer()
-      .then(md => this.getMDataValueForKey(md, servicePath))
-      .then(val => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
-      .then(serMd => serMd.getNameAndTag());
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicMd = await this.getPublicContainer();
+        const val = await this.getMDataValueForKey(publicMd, servicePath);
+        const serMd = await this[_app].mutableData.newPublic(val, CONSTANTS.TYPE_TAG.WWW);
+        const result = await serMd.getNameAndTag();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -518,26 +656,26 @@ class SafeApi {
    * @param {string} servicePath path to service mutable data
    */
   updateServiceIfExist(publicName, serviceName, servicePath) {
-    return this.getPublicNamesContainer()
-      .then(pnMd => this.getMDataValueForKey(pnMd, publicName))
-      .then(val => this.app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.DNS))
-      .then(md => (
-        md.get(serviceName)
-          .then((value) => {
-            if (value.buf.length !== 0) {
-              return;
-            }
-            return this.getPublicContainer()
-              .then(pubMd => this.getMDataValueForKey(pubMd, servicePath))
-              .then(val => this._updateMDataKey(md, serviceName, val));
-          })
-          .catch((err) => {
-            if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
-              return Promise.resolve(false);
-            }
-            return Promise.reject();
-          })
-      ));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicNamesMd = await this.getPublicNamesContainer();
+        const val = await this.getMDataValueForKey(publicNamesMd, publicName);
+        const md = await this[_app].mutableData.newPublic(val, CONSTANTS.TYPE_TAG.DNS);
+        const value = await md.get(serviceName);
+        if (value.buf.length !== 0) {
+          return resolve(true);
+        }
+        const publicMd = await this.getPublicContainer();
+        const publicMdVal = await this.getMDataValueForKey(publicMd, servicePath);
+        await this._updateMDataKey(md, serviceName, publicMdVal);
+        resolve(true);
+      } catch (err) {
+        if (err.code === CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
+          return resolve(false);
+        }
+        reject(err);
+      }
+    });
   }
 
   /**
@@ -548,15 +686,15 @@ class SafeApi {
    * @param {function} errorCallback the error callback function
    */
   fileUpload(localPath, networkPath, progressCallback, errorCallback) {
-    this.uploader = new Uploader(localPath, networkPath, progressCallback, errorCallback);
-    this.uploader.start();
+    this[_uploader] = new Uploader(localPath, networkPath, progressCallback, errorCallback);
+    this[_uploader].start();
   }
 
   /**
    * Cancel file upload process
    */
   cancelFileUpload() {
-    this.uploader.cancel();
+    this[_uploader].cancel();
   }
 
   /**
@@ -565,69 +703,104 @@ class SafeApi {
    * @param {function} callback the progress callback function
    */
   fileDownload(networkPath, callback) {
-    this.downloader = new Downloader(networkPath, callback);
-    this.downloader.start();
+    this[_downloader] = new Downloader(networkPath, callback);
+    this[_downloader].start();
   }
 
   /**
    * Cancel file download process
    */
   cancelFileDownload() {
-    this.downloader.cancel();
+    this[_downloader].cancel();
   }
 
   /**
    * Get _public container mutable data
    */
   getPublicContainer() {
-    if (!this.app) {
+    if (!this[_app]) {
       return Promise.reject(new Error('Application is not connected.'));
     }
-    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC);
+    return this[_app].auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC);
   }
 
   /**
    * Get _publicNames container mutable data
    */
   getPublicNamesContainer() {
-    if (!this.app) {
+    if (!this[_app]) {
       return Promise.reject(new Error('Application is not connected.'));
     }
-    return this.app.auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES);
+    return this[_app].auth.getContainer(CONSTANTS.ACCESS_CONTAINERS.PUBLIC_NAMES);
+  }
+
+  getPublicNameMD(pubXORName) {
+    return this[_app].mutableData.newPublic(pubXORName, CONSTANTS.TYPE_TAG.DNS);
   }
 
   /* eslint-disable class-methods-use-this */
   getMDataValueForKey(md, key) {
     /* eslint-enable class-methods-use-this */
-    return md.encryptKey(key)
-      .then(encKey => md.get(encKey))
-      .then(value => md.decrypt(value.buf));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const encKey = await md.encryptKey(key);
+        const value = await md.get(encKey);
+        const result = await md.decrypt(value.buf);
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   _checkMDAccessible(md) {
-    return md.getPermissions()
-      .then(perm => this.app.crypto.getAppPubSignKey()
-        .then(signKey => perm.getPermissionSet(signKey)));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const perm = await md.getPermissions();
+        const signKey = await this[_app].crypto.getAppPubSignKey();
+        const result = await perm.getPermissionSet(signKey);
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /* eslint-disable class-methods-use-this */
-  _updateMDataKey(md, key, value) {
+  _updateMDataKey(md, key, value, ifEmpty) {
     /* eslint-enable class-methods-use-this */
-    return md.getEntries()
-      .then(entries => entries.get(key)
-        .then(val => entries.mutate()
-          .then(mut => mut.update(key, value, val.version + 1)
-            .then(() => md.applyEntriesMutation(mut)))));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const entries = await md.getEntries();
+        const val = await entries.get(key);
+        if (ifEmpty && val.buf.length !== 0) {
+          return reject(new Error('Mutable data value is not empty'));
+        }
+        const mut = await entries.mutate();
+        await mut.update(key, value, val.version + 1);
+        await md.applyEntriesMutation(mut);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /* eslint-disable class-methods-use-this */
   _removeFromMData(md, key) {
     /* eslint-enable class-methods-use-this */
-    return md.getEntries()
-      .then(entries => entries.get(key)
-        .then(value => entries.mutate()
-          .then(mut => mut.remove(key, value.version + 1)
-            .then(() => md.applyEntriesMutation(mut)))));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const entries = await md.getEntries();
+        const value = await entries.get(key);
+        const mut = await entries.mutate();
+        await mut.remove(key, value.version + 1);
+        await md.applyEntriesMutation(mut);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   /* eslint-disable class-methods-use-this */
@@ -636,33 +809,42 @@ class SafeApi {
     let keyToInsert = key;
     let valToInsert = val;
 
-    return md.getEntries()
-      .then(entries => entries.mutate()
-        .then((mut) => {
-          if (toEncrypt) {
-            return md.encryptKey(key)
-              .then(encKey => md.encryptValue(val)
-                .then((encVal) => {
-                  keyToInsert = encKey;
-                  valToInsert = encVal;
-                })).then(() => mut);
-          }
-          return mut;
-        })
-        .then(mut => mut.insert(keyToInsert, valToInsert)
-          .then(() => md.applyEntriesMutation(mut))));
+    return new Promise(async (resolve, reject) => {
+      try {
+        const entries = await md.getEntries();
+        const mut = await entries.mutate();
+        if (toEncrypt) {
+          keyToInsert = await md.encryptKey(key);
+          valToInsert = await md.encryptValue(val);
+        }
+        await mut.insert(keyToInsert, valToInsert);
+        await md.applyEntriesMutation(mut);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   _getServicePath(serviceXorName) {
     let servicePath = null;
-    return this.getPublicContainer()
-      .then(md => md.getEntries()
-        .then(entries => entries.forEach((key, val) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicMd = await this.getPublicContainer();
+        const entries = await publicMd.getEntries();
+        await entries.forEach((key, val) => {
           if (val.buf.equals(serviceXorName.buf)) {
             servicePath = key.toString();
           }
-        }))).then(() => servicePath);
+        });
+        resolve(servicePath);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 }
+
 const safeApi = new SafeApi();
 export default safeApi;
+export const Api = SafeApi;

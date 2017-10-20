@@ -2,14 +2,14 @@ import path from 'path';
 import pkg from '../package.json';
 
 const CONSTANTS = {
-  DEV_ENV: 'development',
-  TAG_TYPE: {
+  ENV: {
+    DEV: 'development',
+    TEST: 'test',
+    PROD: 'production',
+  },
+  TYPE_TAG: {
     DNS: 15001,
     WWW: 15002,
-  },
-  KEY_TAR: {
-    SERVICE: 'WEB_HOST_MANAGER',
-    ACCOUNT: 'SAFE_USER',
   },
   APP_INFO: {
     data: {
@@ -40,10 +40,6 @@ const CONSTANTS = {
     PUBLIC: '_public',
     PUBLIC_NAMES: '_publicNames',
   },
-  AUTH_RES_TYPE: {
-    CONTAINERS: 'containers',
-    REVOKED: 'revoked',
-  },
   ERROR_CODE: {
     ENCODE_DECODE_ERROR: -1,
     SYMMETRIC_DECIPHER_FAILURE: -3,
@@ -55,6 +51,12 @@ const CONSTANTS = {
     LOW_BALANCE: -113,
     INVALID_SIGN_KEY_HANDLE: -1011,
     EMPTY_DIR: -1029,
+  },
+  APP_ERR_CODE: {
+    INVALID_PUBLIC_NAME: -10001,
+    INVALID_AUTH_RESP: -10002,
+    INVALID_SHARED_MD_RESP: -10003,
+    APP_NOT_INITIALISED: -10004,
   },
   MAX_FILE_SIZE: 20 * 1024 * 1024,
   NETWORK_STATE: {
@@ -72,6 +74,7 @@ const CONSTANTS = {
   },
   MOCK_RES_URI: 'safe-mock-response',
   MD_META_KEY: '_metadata',
+  MD_EMAIL_PREFIX: '@email',
   DOWNLOAD_CHUNK_SIZE: 1000000,
   UPLOAD_CHUNK_SIZE: 1000000,
   ASAR_LIB_PATH: path.resolve(__dirname, '../..', 'app.asar.unpacked/node_modules/@maidsafe/safe-node-app/src/native'),
@@ -132,4 +135,5 @@ const CONSTANTS = {
     },
   },
 };
+
 export default CONSTANTS;

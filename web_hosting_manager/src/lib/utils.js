@@ -132,3 +132,5 @@ const parseUrl = url => (
 export const openExternal = url => (
   shell.openExternal(parseUrl(url))
 );
+
+export const nodeEnv = process.env.NODE_ENV || CONSTANTS.DEV_ENV;

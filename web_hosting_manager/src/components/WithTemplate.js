@@ -33,7 +33,7 @@ export default class WithTemplate extends Component {
   handlePublish(e) {
     e.preventDefault();
     const { publicName, serviceName } = this.props.match.params;
-    const templateDir = process.env.NODE_ENV === CONSTANTS.DEV_ENV ?
+    const templateDir = process.env.NODE_ENV === CONSTANTS.ENV.DEV ?
       CONSTANTS.DEV_TEMPLATE_PATH : CONSTANTS.ASAR_TEMPLATE_PATH;
     const templateFilePath = `${templateDir}/_index.html`;
     try {

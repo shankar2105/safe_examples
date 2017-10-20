@@ -57,7 +57,7 @@ export class FileUploadTask extends Task {
 
     return safeApi.getPublicContainer()
       .then(md => safeApi.getMDataValueForKey(md, containerPath.target))
-      .then(val => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
+      .then(val => app.mutableData.newPublic(val, CONSTANTS.TYPE_TAG.WWW))
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.open()

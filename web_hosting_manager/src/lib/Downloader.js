@@ -28,7 +28,7 @@ export default class Downloader {
 
     return safeApi.getPublicContainer()
       .then(md => safeApi.getMDataValueForKey(md, containerPath.dir))
-      .then(val => app.mutableData.newPublic(val, CONSTANTS.TAG_TYPE.WWW))
+      .then(val => app.mutableData.newPublic(val, CONSTANTS.TYPE_TAG.WWW))
       .then((mdata) => {
         const nfs = mdata.emulateAs('NFS');
         return nfs.fetch(containerPath.file)
