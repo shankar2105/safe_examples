@@ -26,7 +26,7 @@ const _libPath = Symbol('libPath');
 class SafeApi {
   constructor() {
     this[_app] = null;
-    this[_publicNames] = {};
+    this[_publicNames] = [];
     this[_appInfo] = CONSTANTS.APP_INFO;
     this[_uploader] = null;
     this[_downloader] = null;
@@ -100,7 +100,7 @@ class SafeApi {
   }
 
   /**
-   * Authorise service containers and all the web serives under the given public name
+   * Authorise service containers and all the web services under the given public name
    * @param {string} publicName the public name
    */
   authoriseMD(publicName) {
@@ -281,40 +281,48 @@ class SafeApi {
    * @return {Promise<[PublicNames]>} array of Public Names
    */
   fetchPublicNames() {
-    const self = this;
+    const publicNames = [];
+
+    const decryptPublicName = (pubNamesCntr, encPubName) => (
+      new Promise(async (resolve, reject) => {
+        try {
+          const decPubNameBuf = await pubNamesCntr.decrypt(encPubName);
+          const decPubName = decPubNameBuf.toString();
+          if (decPubName !== CONSTANTS.MD_META_KEY) {
+            publicNames.push({
+              publicName: decPubName
+            });
+          }
+          resolve(true);
+        } catch(err) {
+          if (err.code === CONSTANTS.ERROR_CODE.SYMMETRIC_DECIPHER_FAILURE) {
+            return resolve(true);
+          }
+          reject(err);
+        }
+      })
+    );
+
     return new Promise(async (resolve, reject) => {
       try {
-        const publicNamesMd = await this.getPublicNamesContainer();
-        const keys = await publicNamesMd.getKeys();
-        const keysLen = await keys.len();
-        if (keysLen === 0) {
-          console.warn('No Public Names found');
-          return;
+        const pubNamesCntr = await this.getPublicNamesContainer();
+        const pubNames = await pubNamesCntr.getKeys();
+        const pubNamesLen = await pubNames.len();
+        if (pubNamesLen === 0) {
+          return resolve([]);
         }
-        const encPublicNames = [];
-        await keys.forEach((key) => {
-          encPublicNames.push(key);
+        const encPubNames = [];
+        await pubNames.forEach((key) => {
+          encPubNames.push(key);
         });
-        await Promise.all(encPublicNames.map(key => (
-          publicNamesMd.decrypt(key)
-            .then((decKey) => {
-              const decPubId = decKey.toString();
-              if (decPubId === CONSTANTS.MD_META_KEY) {
-                return;
-              }
-              if (!self[_publicNames][decPubId] || typeof self[_publicNames][decPubId] !== 'object') {
-                self[_publicNames][decPubId] = {};
-              }
-            })
-            .catch((err) => {
-              // FIXME shankar - to be removed once
-              // symmetric decipher failure for unknown key decryption fixed.
-              if (err.code === CONSTANTS.ERROR_CODE.SYMMETRIC_DECIPHER_FAILURE) {
-                return resolve(true);
-              }
-              return reject(err);
-            })
-        )));
+
+        const decryptPubNamesQ = [];
+        for (const encPubName of encPubNames) {
+          decryptPubNamesQ.push(decryptPublicName(pubNamesCntr, encPubName));
+        }
+
+        await Promise.all(decryptPubNamesQ);
+        this[_publicNames] = publicNames.slice(0);
         resolve(this[_publicNames]);
       } catch (err) {
         reject(err);
@@ -323,41 +331,33 @@ class SafeApi {
   }
 
   /**
-   * Fetch services registered unders all the Public Names
-   * @return {Promise<[PublicNames]>} array of Public Names with services
+   * Create service folder within _public container
+   * - Create random public mutable data and insert it under _public container
+   * - This entry will have the servicePath as its key
+   * - This Mutable Data will hold the list file stored under it and
+   * the files full paths will be stored as the key to maintain a plain structure.
+   * @param {string} servicePath - service path on network
+   * @param {string} metaFor - will be of `serviceName.publicName` format
    */
-  fetchServices() {
-    const self = this;
-    const publicNames = Object.getOwnPropertyNames(this[_publicNames]);
+  createServiceFolder(servicePath, metaFor) {
     return new Promise(async (resolve, reject) => {
       try {
-        await Promise.all(publicNames.map((publicName) => {
-          const services = {};
-          return this.getPublicNamesContainer()
-            .then(md => this.getMDataValueForKey(md, publicName))
-            .then(value => this[_app].mutableData.newPublic(value, CONSTANTS.TYPE_TAG.DNS))
-            .then(md => md.getEntries()
-              .then(entries => entries.forEach((key, val) => {
-                const service = key.toString();
-                // check service is not an email or deleted
-                if ((service.indexOf('@email') !== -1) || (val.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
-                  return;
-                }
-                services[service] = val;
-              })))
-            .then(() => Promise.all(Object.keys(services).map(service => (
-              self._getServicePath(services[service])
-                .then((servicePath) => {
-                  services[service] = servicePath;
-                })
-            ))))
-            .then(() => {
-              self[_publicNames][publicName] = services;
-            })
-            .catch(Promise.reject);
-        }));
-        resolve(this[_publicNames]);
-      } catch (err) {
+        if (!servicePath) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_PATH, 'Invalid service path'));
+        }
+        if (!metaFor) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_META, 'Invalid service metadata'));
+        }
+        const metaName = `Service Root Directory for: ${metaFor}`;
+        const metaDesc = `Has the files hosted for the service: ${metaFor}`;
+
+        const servFolder = await this[_app].mutableData.newRandomPublic(CONSTANTS.TYPE_TAG.WWW);
+        await servFolder.quickSetup({}, metaName, metaDesc);
+        const servFolderInfo = await servFolder.getNameAndTag();
+        const pubCntr = await this.getPublicContainer();
+        await this._insertToMData(pubCntr, servicePath, servFolderInfo.name);
+        resolve(servFolderInfo.name);
+      } catch(err) {
         reject(err);
       }
     });
@@ -377,34 +377,107 @@ class SafeApi {
   createService(publicName, serviceName, pathXORName) {
     return new Promise(async (resolve, reject) => {
       if (!publicName) {
-        return reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Public Id' })));
+        return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_PUBLIC_NAME, 'Invalid publicName'));
       }
       if (!serviceName) {
-        return reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Service' })));
+        return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_NAME, 'Invalid serviceName'));
       }
       if (!pathXORName) {
-        return reject(new Error(I18n.t('messages.cannotBeEmpty', { name: 'Container path' })));
+        return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_PATH, 'Invalid service path'));
       }
-      let publicNameMd;
+      let servCntr;
       try {
-        const publicNamesMd = await this.getPublicNamesContainer();
-        const decVal = await this.getMDataValueForKey(publicNamesMd, publicName);
-        publicNameMd = await this[_app].mutableData.newPublic(decVal, CONSTANTS.TYPE_TAG.DNS);
-        await this._insertToMData(publicNameMd, serviceName, pathXORName);
+        const pubNamesCntr = await this.getPublicNamesContainer();
+        const servCntrName = await this.getMDataValueForKey(pubNamesCntr, publicName);
+        servCntr = await this.getPublicNameMD(servCntrName);
+        await this._insertToMData(servCntr, serviceName, pathXORName);
         resolve(true);
       } catch (err) {
         if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
           return reject(err);
         }
         try {
-          await this._updateMDataKey(publicNameMd, serviceName, pathXORName, true);
+          await this._updateMDataKey(servCntr, serviceName, pathXORName, true);
         } catch (e) {
-          if (!e.code) {
-            return reject(err);
-          }
           return reject(e);
         }
         resolve(true);
+      }
+    });
+  }
+
+  /**
+   * Fetch services registered unders all the Public Names
+   * @return {Promise<[PublicNames]>} array of Public Names with services
+   */
+  fetchServices() {
+    const self = this;
+    const publicNames = this[_publicNames].slice(0);
+    const updatedPubNames = [];
+
+    const updateServicePath = (service) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const path = this._getServicePath(service.xorname);
+          resolve({
+            ...service,
+            path
+          });
+        } catch(err) {
+          reject(err);
+        }
+      });
+    };
+
+    const fetch = (pubName) => {
+      const serviceList = [];
+      return new Promise(async (resolve, reject) => {
+        try {
+          const pubNamesCntr = await this.getPublicNamesContainer();
+          const servCntrName = await this.getMDataValueForKey(pubNamesCntr, pubName);
+          const servCntr = await this.getPublicNameMD(servCntrName);
+          const services = await servCntrName.getEntries();
+          await services.forEach((key, value) => {
+            const service = key.toString();
+            // check service is not an email or deleted
+            if ((service.indexOf('@email') !== -1) || (value.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
+              return resolve();
+            }
+            serviceList.push({
+              name: service,
+              xorname: value.buf
+            });
+          });
+          const servicesQ = [];
+
+          for(const service of serviceList) {
+            servicesQ.push(updateServicePath(service));
+          }
+
+          const updatedServList = await Promise.all(servicesQ);
+
+          updatedPubNames.push({
+            publicName: pubName,
+            services: updatedServList
+          });
+          resolve();
+        } catch(err) {
+          reject(err);
+        }
+      });
+    };
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const publicNameQ = [];
+        for(const pubName of publicNames) {
+          publicNameQ.push(fetch(pubName));
+        }
+        await Promise.all(publicNameQ);
+        this[_publicNames] = updatedPubNames.slice(0);
+        resolve(this[_publicNames]);
+      } catch (err) {
+        reject(err);
       }
     });
   }
@@ -427,25 +500,6 @@ class SafeApi {
         reject(err);
       }
     });
-  }
-
-  /**
-   * Create service Mutable Data
-   * - Create random public mutable data and insert it under _public container
-   * - This entry will have the servicePath as its key
-   * - This Mutable Data will hold the list file stored under it and
-   * the files full paths will be stored as the key to maintain a plain structure.
-   * @param {string} servicePath - service path on network
-   * @param {string} metaFor - will be of `serviceName.publicName` format
-   */
-  createServiceContainer(servicePath, metaFor) {
-    const metaName = `Service Root Directory for: ${metaFor}`;
-    const metaDesc = `Has the files hosted for the service: ${metaFor}`;
-    return this[_app].mutableData.newRandomPublic(CONSTANTS.TYPE_TAG.WWW)
-      .then(md => md.quickSetup({}, metaName, metaDesc).then(() => md.getNameAndTag()))
-      .then(mdMeta => this.getPublicContainer()
-        .then(pubMd => this._insertToMData(pubMd, servicePath, mdMeta.name))
-        .then(() => mdMeta.name));
   }
 
   /**
@@ -774,7 +828,7 @@ class SafeApi {
         const entries = await md.getEntries();
         const val = await entries.get(key);
         if (ifEmpty && val.buf.length !== 0) {
-          return reject(new Error('Mutable data value is not empty'));
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.ENTRY_VALUE_NOT_EMPTY, 'Entry value is not empty'));
         }
         const mut = await entries.mutate();
         await mut.update(key, value, val.version + 1);

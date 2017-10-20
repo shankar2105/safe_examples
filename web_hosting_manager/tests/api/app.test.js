@@ -18,18 +18,18 @@ expect.extend({
       pass: false,
     };
   },
-  countObject(received, argument) {
-    if (Object.keys(received).length === argument) {
+  arrayCounts(received, argument) {
+    if (received.length === argument) {
       return {
         message: () => (
-          `expected ${received} not to be equal to ${argument}`
+          `expected ${received} length not to be equal to ${argument}`
         ),
         pass: true,
       };
     }
     return {
       message: () => (
-        `expected ${received} not to be equal to ${argument}`
+        `expected ${received} length not to be equal to ${argument}`
       ),
       pass: false,
     };
@@ -69,62 +69,81 @@ describe('Create PublicName API', () => {
   it(`fail to crate create dubpicate public name (name - \'${publicName}\')`, async () => {
     await expect(api.createPublicName(publicName))
       .rejects
-      .toHaveProperty(h.errorCodeKey, -104);
+      .toHaveProperty(h.errorCodeKey, CONSTANTS.ERROR_CODE.DATA_EXISTS);
   });
 });
 
-// describe('Fetch Public Name API', () => {
-//   let api = undefined;
-//   const publicName1 = h.randomStr();
-//   const publicName2 = h.randomStr();
-//   beforeAll(async () => {
-//     api = await h.authoriseApp();
-//     await api.createPublicName(publicName1);
-//     await api.createPublicName(publicName2);
-//   });
+describe('Fetch PublicNames API', () => {
+  let api = undefined;
+  const publicName1 = h.randomStr();
+  const publicName2 = h.randomStr();
+  beforeAll(async () => {
+    api = await h.authoriseApp();
+    await api.createPublicName(publicName1);
+    await api.createPublicName(publicName2);
+  });
 
-//   it(`fetch PublicName with names \'${publicName1}\' and \'${publicName2}\'`, async () => {
-//     await expect(api.fetchPublicNames()).resolves.toHaveProperty(publicName1);
-//     await expect(api.fetchPublicNames()).resolves.toHaveProperty(publicName2);
-//     await expect(api.fetchPublicNames()).resolves.countObject(2);
-//   });
-// });
+  it(`fetch PublicNames list with \'${publicName1}\' and \'${publicName2}\'`, async () => {
+    const expected = [
+      { publicName: publicName1 },
+      { publicName: publicName2 }
+    ];
+    await expect(api.fetchPublicNames()).resolves.toEqual(expect.arrayContaining(expected));
+    await expect(api.fetchPublicNames()).resolves.arrayCounts(2);
+  });
+});
 
-// describe('Create Service Mutable Data API', () => {
-//   let api = undefined;
-//   const metaFor = h.randomStr();
-//   const servicePath = `_public/${metaFor}`
-//   beforeAll(async () => {
-//     api = await h.authoriseApp();
-//   });
+describe('Create Service Mutable Data API', () => {
+  let api = undefined;
+  const metaFor = h.randomStr();
+  const servicePath = `_public/${metaFor}`
+  beforeAll(async () => {
+    api = await h.authoriseApp();
+  });
 
-//   it('create new service MD', async () => {
-//     await expect(api.createServiceContainer(servicePath, metaFor)).resolves.isXORName();
-//   });
+  it('throws error if servicePath is empty', async () => (
+    await expect(api.createServiceFolder())
+      .rejects
+      .toHaveProperty(h.errorCodeKey, CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_PATH)
+  ));
 
-//   it('fail to create duplicate service MD', async () => {
-//     await expect(api.createServiceContainer(servicePath, metaFor)).rejects.toHaveProperty(h.errorCodeKey, -107);
-//   });
-// });
+  it('throws error if serice metadata is empty', async () => (
+    await expect(api.createServiceFolder(servicePath))
+      .rejects
+      .toHaveProperty(h.errorCodeKey, CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_META)
+  ));
 
-// describe('Create Service API', () => {
-//   let api = undefined;
-//   const serviceName = h.randomStr();
-//   const publicName = h.randomStr();
-//   const servicePath = `_public/${serviceName}`;
-//   let serviceXORName = undefined;
-//   beforeAll(async () => {
-//     api = await h.authoriseApp();
-//     await api.createPublicName(publicName);
-//     serviceXORName = await api.createServiceContainer(servicePath, serviceName);
-//   });
+  it('create new service MD', async () => (
+    await expect(api.createServiceFolder(servicePath, metaFor)).resolves.isXORName()
+  ));
 
-//   it('create new service', async () => {
-//     await expect(api.createService(publicName, serviceName, serviceXORName)).resolves.toBeTruthy();
-//     await expect(h.fetchServiceName(api, publicName, serviceName)).resolves.toMatchObject(serviceXORName.buffer);
-//   });
+  it('fail to create duplicate service MD', async () => (
+    await expect(api.createServiceFolder(servicePath, metaFor))
+      .rejects
+      .toHaveProperty(h.errorCodeKey, CONSTANTS.ERROR_CODE.ENTRY_EXISTS)
+  ));
+});
 
-//   it('fail to create duplicate service', async () => {
-//     await expect(api.createService(publicName, serviceName, serviceXORName)).rejects.toHaveProperty(h.errorCodeKey, -107);
-//   });
-// });
+describe('Create Service API', () => {
+  let api = undefined;
+  const publicName = h.randomStr();
+  const serviceName = h.randomStr();
+  const servicePath = `_public/${serviceName}`;
+  let serviceXORName = undefined;
+  beforeAll(async () => {
+    api = await h.authoriseApp();
+    await api.createPublicName(publicName);
+    serviceXORName = await api.createServiceFolder(servicePath, serviceName);
+  });
+
+  it('create new service', async () => {
+    await expect(api.createService(publicName, serviceName, serviceXORName)).resolves.toBeTruthy();
+    await expect(h.fetchServiceName(api, publicName, serviceName)).resolves.toMatchObject(serviceXORName.buffer);
+  });
+
+  it('fail to create duplicate service', async () => (
+    await expect(api.createService(publicName, serviceName, serviceXORName))
+      .rejects
+      .toHaveProperty(h.errorCodeKey, CONSTANTS.APP_ERR_CODE.ENTRY_VALUE_NOT_EMPTY)
+  ));
+});
