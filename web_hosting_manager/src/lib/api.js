@@ -290,7 +290,7 @@ class SafeApi {
           const decPubName = decPubNameBuf.toString();
           if (decPubName !== CONSTANTS.MD_META_KEY) {
             publicNames.push({
-              publicName: decPubName
+              name: decPubName
             });
           }
           resolve(true);
@@ -418,9 +418,9 @@ class SafeApi {
     const updateServicePath = (service) => {
       return new Promise(async (resolve, reject) => {
         try {
-          const path = this._getServicePath(service.xorname);
+          const path = await this._getServicePath(service.xorname);
           resolve({
-            ...service,
+            name: service.name,
             path
           });
         } catch(err) {
@@ -436,12 +436,12 @@ class SafeApi {
           const pubNamesCntr = await this.getPublicNamesContainer();
           const servCntrName = await this.getMDataValueForKey(pubNamesCntr, pubName);
           const servCntr = await this.getPublicNameMD(servCntrName);
-          const services = await servCntrName.getEntries();
+          const services = await servCntr.getEntries();
           await services.forEach((key, value) => {
             const service = key.toString();
             // check service is not an email or deleted
             if ((service.indexOf('@email') !== -1) || (value.buf.length === 0) || service === CONSTANTS.MD_META_KEY) {
-              return resolve();
+              return;
             }
             serviceList.push({
               name: service,
@@ -449,7 +449,6 @@ class SafeApi {
             });
           });
           const servicesQ = [];
-
           for(const service of serviceList) {
             servicesQ.push(updateServicePath(service));
           }
@@ -457,7 +456,7 @@ class SafeApi {
           const updatedServList = await Promise.all(servicesQ);
 
           updatedPubNames.push({
-            publicName: pubName,
+            name: pubName,
             services: updatedServList
           });
           resolve();
@@ -471,7 +470,7 @@ class SafeApi {
       try {
         const publicNameQ = [];
         for(const pubName of publicNames) {
-          publicNameQ.push(fetch(pubName));
+          publicNameQ.push(fetch(pubName.name));
         }
         await Promise.all(publicNameQ);
         this[_publicNames] = updatedPubNames.slice(0);
@@ -492,9 +491,47 @@ class SafeApi {
   deleteService(publicName, serviceName) {
     return new Promise(async (resolve, reject) => {
       try {
+        if (!publicName) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_PUBLIC_NAME, 'Invalid publicName'));
+        }
+        if (!serviceName) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_NAME, 'Invalid serviceName'));
+        }
         const hashedPubName = await this[_app].crypto.sha3Hash(publicName);
-        const publicNameMd = await this.getPublicNameMD(hashedPubName);
-        await this._removeFromMData(publicNameMd, serviceName);
+        const servCntr = await this.getPublicNameMD(hashedPubName);
+        await this._removeFromMData(servCntr, serviceName);
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Remap the service to different service Mutable Data
+   * - Update the service entry with XORName of Mutable Data under given servicePath
+   * @param {string} publicName the public name
+   * @param {string} serviceName the service name
+   * @param {string} servicePath service path to which the service to be remapped
+   */
+  remapService(publicName, serviceName, servicePath) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!publicName) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_PUBLIC_NAME, 'Invalid publicName'));
+        }
+        if (!serviceName) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_NAME, 'Invalid serviceName'));
+        }
+        if (!servicePath) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_PATH, 'Invalid service path'));
+        }
+        const pubCntr = await this.getPublicContainer();
+        const servFolderPath = await this.getMDataValueForKey(pubCntr, servicePath);
+        const pubNamesCntr = await this.getPublicNamesContainer();
+        const servCntrName = await this.getMDataValueForKey(pubNamesCntr, publicName);
+        const servCntr = await this.getPublicNameMD(servCntrName);
+        await this._updateMDataKey(servCntr, serviceName, servFolderPath);
         resolve(true);
       } catch (err) {
         reject(err);
@@ -506,13 +543,16 @@ class SafeApi {
    * Check service container is accessible by this application
    * @param {string} publicName the public name
    */
-  checkPublicNameAccessible(publicName) {
+  canAccessServiceContainer(publicName) {
     return new Promise(async (resolve, reject) => {
       try {
-        const publicNamesMd = await this.getPublicNamesContainer();
-        const decVal = await this.getMDataValueForKey(publicNamesMd, publicName);
-        const publicNameMd = await this[_app].mutableData.newPublic(decVal, CONSTANTS.TYPE_TAG.DNS);
-        await this._checkMDAccessible(publicNameMd);
+        if (!publicName) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_PUBLIC_NAME, 'Invalid publicName'));
+        }
+        const pubNameCntr = await this.getPublicNamesContainer();
+        const servCntrName = await this.getMDataValueForKey(pubNameCntr, publicName);
+        const servCntr = await this.getPublicNameMD(servCntrName);
+        await this._checkMDAccessible(servCntr);
         resolve(true);
       } catch (err) {
         reject(err);
@@ -521,25 +561,46 @@ class SafeApi {
   }
 
   /**
-   * Get list of services mutable data stored under _public container
+   * Get list name of service folder stored under _public container
    * - will get list of service paths under the container
    */
-  getPublicContainerKeys() {
-    const publicKeys = [];
+  getServiceFolderNames() {
+    const serviceFolderList = [];
     return new Promise(async (resolve, reject) => {
       try {
-        const publicMd = await this.getPublicContainer();
-        const keys = await publicMd.getKeys();
-        const len = await keys.len();
-        if (len !== 0) {
-          await keys.forEach((key) => {
+        const pubCntr = await this.getPublicContainer();
+        const serviceFolders = await pubCntr.getKeys();
+        const serviceFoldersLen = await serviceFolders.len();
+        if (serviceFoldersLen !== 0) {
+          await serviceFolders.forEach((key) => {
             if (!key) {
               return;
             }
-            publicKeys.unshift(key.toString());
+            serviceFolderList.unshift(key.toString());
           });
         }
-        resolve(publicKeys);
+        resolve(serviceFolderList);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Get serive Mutable Data name and typeTag
+   * @param {string} servicePath path to service mutable data
+   */
+  getServiceFolderInfo(servicePath) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!servicePath) {
+          return reject(makeError(CONSTANTS.APP_ERR_CODE.INVALID_SERVICE_PATH, 'Invalid service path'));
+        }
+        const pubCntr = await this.getPublicContainer();
+        const servFolderName = await this.getMDataValueForKey(pubCntr, servicePath);
+        const servFolder = await this.getServiceFolderMD(servFolderName);
+        const servFolderInfo = await servFolder.getNameAndTag();
+        resolve(servFolderInfo);
       } catch (err) {
         reject(err);
       }
@@ -604,56 +665,52 @@ class SafeApi {
   }
 
   /**
-   * Remap the service to different service Mutable Data
-   * - Update the service entry with XORName of Mutable Data under given sericePath
-   * @param {string} publicName the public name
-   * @param {string} serviceName the service name
-   * @param {string} sericePath service path to which the service to be remapped
-   */
-  remapService(publicName, serviceName, sericePath) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const publicMd = await this.getPublicContainer();
-        const containerVal = await this.getMDataValueForKey(publicMd, sericePath);
-        const publicNamesMd = await this.getPublicNamesContainer();
-        const pnVal = await this.getMDataValueForKey(publicNamesMd, publicName);
-        const md = await this[_app].mutableData.newPublic(pnVal, CONSTANTS.TYPE_TAG.DNS);
-        await this._updateMDataKey(md, serviceName, containerVal);
-        resolve(true);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  /**
    * Get list of files stored under the service Mutable Data
    * - get the file paths and transform it into directory structure
-   * @param {string} sericePath path to service mutable data
+   * @param {string} servicePath path to service mutable data
    */
-  getServiceContainer(sericePath) {
+  fetchFiles(servicePath) {
+    const fetchFile = (nfs, file) => {
+      return new Promise(async(resolve, reject) => {
+        try {
+          let fileObj = await nfs.fetch(file);
+          fileObj = await nfs.open(fileObj, CONSTANTS.FILE_OPEN_MODE.OPEN_MODE_READ);
+          const fileSize = await fileObj.size();
+          const dirName = servicePath.split('/').slice(3).join('/');
+          resolve({
+            isFile: true,
+            name: dirName ? file.substr(dirName.length + 1) : file,
+            size,
+          });
+        } catch(err) {
+          reject(err);
+        }
+      });
+    };
     return new Promise(async (resolve, reject) => {
       try {
-        const publicMd = await this.getPublicContainer();
-        const value = await this.getMDataValueForKey(publicMd, sericePath.split('/').slice(0, 3).join('/'));
-        const serMd = await this[_app].mutableData.newPublic(value, CONSTANTS.TYPE_TAG.WWW);
+        const pubCntr = await this.getPublicContainer();
+        const servFolderName = await this.getMDataValueForKey(pubCntr, servicePath.split('/').slice(0, 3).join('/'));
+        const servFolder = await this.getServiceFolderMD(servFolderName);
+
         const files = [];
-        const result = [];
-        const rootName = sericePath.split('/').slice(3).join('/');
-        await this._checkMDAccessible(serMd);
-        const entries = await serMd.getEntries();
-        await entries.forEach((key, val) => {
+        const rootPath = servicePath.split('/').slice(3).join('/');
+
+        await this._checkMDAccessible(servFolder);
+
+        const filePaths = await servFolder.getEntries();
+        await filePaths.forEach((key, val) => {
           if (val.buf.length === 0) {
             return;
           }
           const keyStr = key.toString();
-          if ((rootName && (keyStr.indexOf(rootName) !== 0))
+          if ((rootPath && (keyStr.indexOf(rootPath) !== 0))
             || keyStr === CONSTANTS.MD_META_KEY) {
             return;
           }
           let keyStrTrimmed = keyStr;
-          if (rootName.length > 0) {
-            keyStrTrimmed = keyStr.substr(rootName.length + 1);
+          if (rootPath.length > 0) {
+            keyStrTrimmed = keyStr.substr(rootPath.length + 1);
           }
           if (keyStrTrimmed.split('/').length > 1) {
             const dirName = keyStrTrimmed.split('/')[0];
@@ -664,38 +721,16 @@ class SafeApi {
           }
           files.unshift(keyStr);
         });
-        const nfs = serMd.emulateAs('NFS');
-        await Promise.all(files.map(file => (
-          nfs.fetch(file)
-            .then(f => nfs.open(f, CONSTANTS.FILE_OPEN_MODE.OPEN_MODE_READ))
-            .then(f => f.size())
-            .then((size) => {
-              const dirName = sericePath.split('/').slice(3).join('/');
-              result.unshift({
-                isFile: true,
-                name: dirName ? file.substr(dirName.length + 1) : file,
-                size,
-              });
-            })
-        )));
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
 
-  /**
-   * Get serive Mutable Data name and typeTag
-   * @param {string} servicePath path to service mutable data
-   */
-  getServiceContainerMeta(servicePath) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const publicMd = await this.getPublicContainer();
-        const val = await this.getMDataValueForKey(publicMd, servicePath);
-        const serMd = await this[_app].mutableData.newPublic(val, CONSTANTS.TYPE_TAG.WWW);
-        const result = await serMd.getNameAndTag();
+        const nfs = servFolder.emulateAs('NFS');
+
+        const fetchFileQ = [];
+        for(const file of files) {
+          fetchFileQ.push(fetchFile(file, nfs));
+        }
+
+        const result = await Promise.all(fetchFileQ);
+
         resolve(result);
       } catch (err) {
         reject(err);
@@ -736,11 +771,11 @@ class SafeApi {
    * Upload a file or directory
    * @param {string} localPath file path on machine
    * @param {string} networkPath file path on network
-   * @param {function} progressCallback the progress callback function
-   * @param {function} errorCallback the error callback function
+   * @param {function} progressCb the progress callback function
+   * @param {function} errorCb the error callback function
    */
-  fileUpload(localPath, networkPath, progressCallback, errorCallback) {
-    this[_uploader] = new Uploader(localPath, networkPath, progressCallback, errorCallback);
+  fileUpload(localPath, networkPath, progressCb, errorCb) {
+    this[_uploader] = new Uploader(localPath, networkPath, progressCb, errorCb);
     this[_uploader].start();
   }
 
@@ -805,6 +840,10 @@ class SafeApi {
         reject(err);
       }
     });
+  }
+
+  getServiceFolderMD(xorname) {
+    return this[_app].mutableData.newPublic(xorname, CONSTANTS.TYPE_TAG.WWW);
   }
 
   _checkMDAccessible(md) {
@@ -887,7 +926,7 @@ class SafeApi {
         const publicMd = await this.getPublicContainer();
         const entries = await publicMd.getEntries();
         await entries.forEach((key, val) => {
-          if (val.buf.equals(serviceXorName.buf)) {
+          if (val.buf.equals(serviceXorName)) {
             servicePath = key.toString();
           }
         });
@@ -901,4 +940,4 @@ class SafeApi {
 
 const safeApi = new SafeApi();
 export default safeApi;
-export const Api = SafeApi;
+export const Api = (nodeEnv === CONSTANTS.ENV.TEST) ? SafeApi : null;
