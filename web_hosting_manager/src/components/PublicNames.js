@@ -74,7 +74,7 @@ export default class PublicNames extends Component {
     );
   }
 
-  getPublicNameListItem(publicName, services) {
+  getPublicNameListItem(publicName, services = []) {
     return (
       <div className="i" key={`publicName-${genKey()}`}>
         <div
@@ -111,8 +111,8 @@ export default class PublicNames extends Component {
           </div>
           <div className="i-cnt-ls">
             {
-              Object.keys(services).map(service =>
-                this.getServiceItem(publicName, service, services[service]))
+              services.map(service =>
+                this.getServiceItem(publicName, service.name, service.path))
             }
           </div>
         </div>
@@ -121,12 +121,15 @@ export default class PublicNames extends Component {
   }
 
   getPublicNameList(publicNames) {
+    console.log('publicNames', publicNames)
+    const sortPubName = (a, b) => (a.name > b.name);
+
     return (
       <div className="public-id-ls">
         <div className="public-id-ls-b">
           {
-            Object.keys(publicNames).sort().map(publicName =>
-              this.getPublicNameListItem(publicName, publicNames[publicName]))
+            publicNames.sort(sortPubName).map(publicName =>
+              this.getPublicNameListItem(publicName.name, publicName.services))
           }
         </div>
       </div>
@@ -140,7 +143,7 @@ export default class PublicNames extends Component {
 
   render() {
     const { publicNames } = this.props;
-    const hasPublicNames = (Object.keys(publicNames).length !== 0);
+    const hasPublicNames = (publicNames.length !== 0);
     const container = hasPublicNames ?
       this.getPublicNameList(publicNames) : this.getNoPublicNamesContainer();
 
@@ -163,7 +166,7 @@ export default class PublicNames extends Component {
 
 PublicNames.propTypes = {
   history: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
-  publicNames: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
+  publicNames: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
   processDesc: PropTypes.string.isRequired,
   error: PropTypes.string.isRequired,
   nwState: PropTypes.string.isRequired,

@@ -2,7 +2,6 @@ import path from 'path';
 import fs from 'fs';
 import { I18n } from 'react-redux-i18n';
 
-import safeApi from './api';
 import CONSTANTS from '../constants';
 
 const parseContainerPath = (targetPath) => {
@@ -40,89 +39,94 @@ export class EmptyDirTask {
 }
 
 export class FileUploadTask extends Task {
-  constructor(localPath, networkPath) {
+  constructor(api, localPath, networkPath) {
     super();
+    this.api = api;
     this.localPath = localPath;
     this.networkPath = networkPath;
     this.cancelled = false;
   }
 
   execute(callback) {
-    const { app } = safeApi;
-    if (!app) {
-      return callback(new Error('App not registered'));
-    }
     const containerPath = parseContainerPath(this.networkPath);
     const fileStats = fs.statSync(this.localPath);
 
-    return safeApi.getPublicContainer()
-      .then(md => safeApi.getMDataValueForKey(md, containerPath.target))
-      .then(val => app.mutableData.newPublic(val, CONSTANTS.TYPE_TAG.WWW))
-      .then((mdata) => {
-        const nfs = mdata.emulateAs('NFS');
-        return nfs.open()
-          .then(file => (
-            new Promise((resolve, reject) => {
-              const fd = fs.openSync(this.localPath, 'r');
-              let offset = 0;
-              const { size } = fileStats;
-              let chunkSize = CONSTANTS.UPLOAD_CHUNK_SIZE;
-              let buffer = null;
-              const writeFile = (remainingBytes) => {
-                if (this.cancelled) {
-                  return reject(new Error());
-                }
+    let chunkSize = CONSTANTS.UPLOAD_CHUNK_SIZE;
+    const fd = fs.openSync(this.localPath, 'r');
+    let offset = 0;
+    let buffer = null;
+    const { size } = fileStats;
+    console.log('file to write ::', containerPath);
+    const writeFile = (file, remainingBytes) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          if (this.cancelled) {
+            return reject(new Error());
+          }
 
-                if (remainingBytes < chunkSize) {
-                  chunkSize = remainingBytes;
-                }
+          if (remainingBytes < chunkSize) {
+            chunkSize = remainingBytes;
+          }
+          buffer = Buffer.alloc(chunkSize);
+          fs.readSync(fd, buffer, 0, chunkSize, offset);
+          await file.write(buffer);
+          offset += chunkSize;
+          remainingBytes -= chunkSize;
+          console.log('offset size ::', offset, size);
+          if (offset === size) {
+            callback(null, {
+              isFile: true,
+              isCompleted: false,
+              size: chunkSize,
+            });
+            await file.close();
+            return resolve(file);
+          }
+          callback(null, {
+            isFile: true,
+            isCompleted: false,
+            size: chunkSize,
+          });
+          await writeFile(file, remainingBytes);
+          resolve();
+        } catch(err) {
+          reject(err);
+        }
+      });
+    };
 
-                buffer = Buffer.alloc(chunkSize);
-                fs.readSync(fd, buffer, 0, chunkSize, offset);
-                return file.write(buffer)
-                  .then(() => {
-                    offset += chunkSize;
-                    remainingBytes -= chunkSize;
-
-                    if (offset === size) {
-                      callback(null, {
-                        isFile: true,
-                        isCompleted: false,
-                        size: chunkSize,
-                      });
-                      return file.close().then(() => resolve(file));
-                    }
-                    callback(null, {
-                      isFile: true,
-                      isCompleted: false,
-                      size: chunkSize,
-                    });
-                    return writeFile(remainingBytes);
-                  })
-                  .catch(err => reject(err));
-              };
-              writeFile(size);
-            })
-          ))
-          .then(file => nfs.insert(containerPath.file, file)
-            .catch((err) => {
-              if (err.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
-                return callback(err);
-              }
-              return mdata.get(containerPath.file)
-                .then((value) => {
-                  if (value.buf.length !== 0) {
-                    return callback(err);
-                  }
-                  return nfs.update(containerPath.file, file, value.version + 1);
-                });
-            }));
-      })
-      .then(() => callback(null, {
-        isFile: true,
-        isCompleted: true,
-        size: 0,
-      }))
-      .catch(callback);
+    return new Promise(async (resolve) => {
+      try {
+        const pubCntr = await this.api.getPublicContainer();
+        const servFolderName = await this.api.getMDataValueForKey(pubCntr, containerPath.target);
+        const servFolder = await this.api.getServiceFolderMD(servFolderName);
+        const nfs = servFolder.emulateAs('NFS');
+        let file = await nfs.open();
+        await writeFile(file, size);
+        try {
+          await nfs.insert(containerPath.file, file);
+        } catch(e) {
+          if (e.code !== CONSTANTS.ERROR_CODE.ENTRY_EXISTS) {
+            callback(e)
+            return resolve();
+          }
+          const fileXorname = await servFolder.get(containerPath.file);
+          if (fileXorname.buf.length !== 0) {
+            callback(e);
+            return resolve();
+          }
+          await nfs.update(containerPath.file, file, fileXorname.version + 1);
+        }
+        console.log('file complete ::')
+        callback(null, {
+          isFile: true,
+          isCompleted: true,
+          size: 0,
+        });
+        resolve();
+      } catch(err) {
+        callback(err);
+      }
+    });
   }
 }

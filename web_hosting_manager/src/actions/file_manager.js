@@ -18,7 +18,7 @@ let isUploadCancelled = false;
  */
 export const getContainerInfo = path => ({
   type: ACTION_TYPES.GET_CONTAINER_INFO,
-  payload: api.getServiceContainer(path),
+  payload: api.fetchFiles(path),
 });
 
 /**
@@ -48,6 +48,7 @@ export const upload = (localPath, networkPath, done) => {
   isUploadCancelled = false;
   return (dispatch) => {
     let progressCallback = (status, isCompleted) => {
+      console.log('upload progress ::', status, isCompleted);
       if (isUploadCancelled) {
         progressCallback = null;
         return;
@@ -72,14 +73,14 @@ export const upload = (localPath, networkPath, done) => {
     dispatch({
       type: ACTION_TYPES.UPLOAD_STARTED,
     });
-    api.getServiceContainerMeta(networkPath)
+    api.getServiceFolderInfo(networkPath)
       .then(() => api.fileUpload(localPath, networkPath, progressCallback, errorCallback))
       .catch((err) => {
         if (err.code !== CONSTANTS.ERROR_CODE.NO_SUCH_ENTRY) {
           return errorCallback(err);
         }
         const metadata = networkPath.replace('_public/', '');
-        api.createServiceContainer(networkPath, metadata)
+        api.createServiceFolder(networkPath, metadata)
           .then(() => api.fileUpload(localPath, networkPath, progressCallback, errorCallback));
       });
   };
@@ -94,7 +95,7 @@ export const upload = (localPath, networkPath, done) => {
  */
 export const publish = (publicId, serviceName, serviceContainerPath) => ({
   type: ACTION_TYPES.PUBLISH,
-  payload: api.getServiceContainerMeta(serviceContainerPath)
+  payload: api.getServiceFolderInfo(serviceContainerPath)
     .then(meta => api.createService(publicId, serviceName, meta.name)),
 });
 

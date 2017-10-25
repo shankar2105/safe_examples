@@ -5,7 +5,7 @@ import CONSTANTS from '../constants';
 import { parseErrorMsg } from '../utils/app';
 
 const initState = {
-  publicNames: {},
+  publicNames: [],
   serviceContainers: [],
   createdPublicName: false,
   ...CONSTANTS.UI.COMMON_STATE,

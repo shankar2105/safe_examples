@@ -1,6 +1,7 @@
 import path from 'path';
 
 import * as h from './helpers';
+import { initTempFolder } from '../../src/lib/temp';
 import CONSTANTS from '../../src/constants';
 
 expect.extend({
@@ -395,36 +396,94 @@ describe('Get Service Folder Info', () => {
   });
 });
 
-// describe('Upload File API', () => {
-//   let api = undefined;
-//   const publicName = h.randomStr();
-//   const serviceName = h.randomStr();
-//   const servicePath = `_public/root-${publicName}/${serviceName}`;
-//   let serviceXORName = undefined;
-//   beforeAll(async () => {
-//     api = await h.authoriseApp();
-//     await api.createPublicName(publicName);
-//     serviceXORName = await api.createServiceFolder(servicePath, serviceName);
-//     await api.createService(publicName, serviceName, serviceXORName);
-//     await api.fetchPublicNames();
-//     await api.fetchServices();
-//   });
+describe('Upload File API', () => {
+  let api = undefined;
+  const publicName = h.randomStr();
+  const serviceName = h.randomStr();
+  const servicePath = `_public/root-${publicName}/${serviceName}`;
+  let serviceXORName = undefined;
+  beforeAll(async () => {
+    api = await h.authoriseApp();
+    await api.createPublicName(publicName);
+    serviceXORName = await api.createServiceFolder(servicePath, serviceName);
+    await api.createService(publicName, serviceName, serviceXORName);
+    await api.fetchPublicNames();
+    await api.fetchServices();
+  });
 
-//   it('upload file', (done) => {
-//     const localPath = path.resolve(__dirname, 'sample.txt');
-//     const networkPath = servicePath;
-//     const progressCallback = (status, isCompleted) => {
-//       console.log('progress ::', status, isCompleted)
-//       if (isCompleted) {
-//         done();
-//       }
-//     };
+  it('upload dir', async () => {
+    await expect(new Promise((resolve, reject) => {
+      const localPath = __dirname;
+      const networkPath = servicePath;
+      const progressCb = (status, isCompleted) => {
+        expect(status).toHaveProperty('total');
+        expect(status.total).toHaveProperty('size');
+        expect(status.total).toHaveProperty('files');
+        expect(status.total).toHaveProperty('directories');
+        expect(status).toHaveProperty('completed');
+        expect(status.completed).toHaveProperty('size');
+        expect(status.completed).toHaveProperty('files');
+        expect(status.completed).toHaveProperty('directories');
+        expect(status).toHaveProperty('progress');
+        if (isCompleted) {
+          expect(status.progress).toEqual(100);
+          resolve(true);
+        }
+      };
 
-//     const errorCallback = (error) => {
-//       console.log('error ::', error);
-//       done();
-//     };
+      const errorCb = (error) => {
+        reject(error);
+      };
+      api.fileUpload(localPath, networkPath, progressCb, errorCb);
+    })).resolves.toBeTruthy();
+  });
+});
 
-//     api.fileUpload(localPath, networkPath, progressCallback, errorCallback);
-//   });
-// });
+describe('Download File API', () => {
+  let api = undefined;
+  const publicName = h.randomStr();
+  const serviceName = h.randomStr();
+  const servicePath = `_public/root-${publicName}/${serviceName}`;
+  let serviceXORName = undefined;
+  const localPath = path.resolve(__dirname, 'sample.txt');
+  const networkPath = servicePath;
+  beforeAll(async () => {
+    initTempFolder();
+    api = await h.authoriseApp();
+    await api.createPublicName(publicName);
+    serviceXORName = await api.createServiceFolder(servicePath, serviceName);
+    await api.createService(publicName, serviceName, serviceXORName);
+    await api.fetchPublicNames();
+    await api.fetchServices();
+    await (new Promise((resolve, reject) => {
+      const progressCb = (status, isCompleted) => {
+        if (isCompleted) {
+          resolve(true);
+        }
+      };
+
+      const errorCb = (error) => {
+        reject(error);
+      };
+      api.fileUpload(localPath, networkPath, progressCb, errorCb);
+    }));
+  });
+
+  it('download file', async () => {
+    await expect(new Promise((resolve, reject) => {
+      const cb = (err, status) => {
+        if (err) {
+          return reject(err);
+        }
+        expect(status).toHaveProperty('completed');
+        expect(status).toHaveProperty('progress');
+        if (status.completed) {
+          expect(status.progress).toEqual(100);
+          resolve(true);
+        }
+      };
+      const nwPath = `${networkPath}/sample.txt`;
+      api.fileDownload(nwPath, cb);
+    })).resolves.toBeTruthy();
+  });
+});

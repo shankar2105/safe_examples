@@ -627,8 +627,8 @@ class SafeApi {
             return resolve(true);
           }
           const file = files[0];
-          const f = await nfs.fetch(file.key);
-          await nfs.delete(file.key, f.version + 1);
+          const f = await nfs.fetch(file.path);
+          await nfs.delete(file.path, f.version + 1);
           files.shift();
           await deleteFiles(nfs, files);
           resolve(true);
@@ -640,12 +640,12 @@ class SafeApi {
 
     return new Promise(async (resolve, reject) => {
       try {
-        const publicMd = await this.getPublicContainer();
-        const value = await this.getMDataValueForKey(publicMd, containerName);
-        const dirMd = await this[_app].mutableData.newPublic(value, CONSTANTS.TYPE_TAG.WWW);
-        const fileKeys = [];
-        const entries = await dirMd.getEntries();
-        await entries.forEach((key, val) => {
+        const pubCntr = await this.getPublicContainer();
+        const servFolderName = await this.getMDataValueForKey(pubCntr, containerName);
+        const servFolder = await this.getServiceFolderMD(servFolderName);
+        const files = [];
+        const filesPath = await servFolder.getEntries();
+        await filesPath.forEach((key, val) => {
           const keyStr = key.toString();
           if ((keyStr.indexOf(containerKey) !== 0) || keyStr === CONSTANTS.MD_META_KEY) {
             return;
@@ -653,10 +653,10 @@ class SafeApi {
           if (val.buf.length === 0) {
             return;
           }
-          fileKeys.push({ key: keyStr, version: val.version });
+          files.push({ path: keyStr, version: val.version });
         });
-        const nfs = dirMd.emulateAs('NFS');
-        await deleteFiles(nfs, fileKeys);
+        const nfs = servFolder.emulateAs('NFS');
+        await deleteFiles(nfs, files);
         resolve(true);
       } catch (err) {
         reject(err);
@@ -680,7 +680,7 @@ class SafeApi {
           resolve({
             isFile: true,
             name: dirName ? file.substr(dirName.length + 1) : file,
-            size,
+            size: fileSize,
           });
         } catch(err) {
           reject(err);
@@ -694,6 +694,7 @@ class SafeApi {
         const servFolder = await this.getServiceFolderMD(servFolderName);
 
         const files = [];
+        let result = [];
         const rootPath = servicePath.split('/').slice(3).join('/');
 
         await this._checkMDAccessible(servFolder);
@@ -726,11 +727,11 @@ class SafeApi {
 
         const fetchFileQ = [];
         for(const file of files) {
-          fetchFileQ.push(fetchFile(file, nfs));
+          fetchFileQ.push(fetchFile(nfs, file));
         }
 
-        const result = await Promise.all(fetchFileQ);
-
+        const resultFiles = await Promise.all(fetchFileQ);
+        result = result.concat(resultFiles);
         resolve(result);
       } catch (err) {
         reject(err);
@@ -775,7 +776,7 @@ class SafeApi {
    * @param {function} errorCb the error callback function
    */
   fileUpload(localPath, networkPath, progressCb, errorCb) {
-    this[_uploader] = new Uploader(localPath, networkPath, progressCb, errorCb);
+    this[_uploader] = new Uploader(this, localPath, networkPath, progressCb, errorCb);
     this[_uploader].start();
   }
 
@@ -792,7 +793,7 @@ class SafeApi {
    * @param {function} callback the progress callback function
    */
   fileDownload(networkPath, callback) {
-    this[_downloader] = new Downloader(networkPath, callback);
+    this[_downloader] = new Downloader(this, networkPath, callback);
     this[_downloader].start();
   }
 

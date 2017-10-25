@@ -5,6 +5,7 @@ import * as Helper from './utils';
 import { FileUploadTask } from './tasks';
 import CONSTANTS from '../constants';
 
+const safeApi = Symbol('safeApi');
 const status = Symbol('status');
 const errorCb = Symbol('errorCb');
 const localPath = Symbol('localPath');
@@ -14,7 +15,8 @@ const taskQueue = Symbol('taskQueue');
 const currentTask = Symbol('currentTask');
 
 export default class Uploader {
-  constructor(pathLocal, networkRootPath, progressCallback, errorCallback) {
+  constructor(api, pathLocal, networkRootPath, progressCallback, errorCallback) {
+    this[safeApi] = api;
     this[localPath] = pathLocal;
     this[errorCb] = errorCallback;
     this[networkPath] = networkRootPath;
@@ -73,6 +75,7 @@ export default class Uploader {
       this[status].total = Helper.getDirectoryStats(this[localPath]);
       this[status].completed = new Helper.DirStats();
       this[taskQueue] = Helper.generateUploadTaskQueue(
+        this[safeApi],
         this[localPath],
         this[networkPath],
         callback,
@@ -81,7 +84,7 @@ export default class Uploader {
       this[taskQueue].run();
     } else {
       const fileName = path.basename(this[localPath]);
-      this[currentTask] = new FileUploadTask(this[localPath], `${this[networkPath]}/${fileName}`);
+      this[currentTask] = new FileUploadTask(this[safeApi], this[localPath], `${this[networkPath]}/${fileName}`);
       this[status].total = new Helper.DirStats();
       this[status].total.size = fs.statSync(this[localPath]).size;
       this[status].completed = new Helper.DirStats();

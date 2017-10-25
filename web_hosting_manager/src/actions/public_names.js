@@ -14,7 +14,7 @@ import ACTION_TYPES from './action_types';
  */
 export const canAccessPublicName = publicName => ({
   type: ACTION_TYPES.CAN_ACCESS_PUBLIC_NAME,
-  payload: api.checkPublicNameAccessible(publicName),
+  payload: api.canAccessServiceContainer(publicName),
 });
 
 /**
@@ -57,7 +57,7 @@ export const getServiceContainers = () => (
   (dispatch) => {
     dispatch({
       type: ACTION_TYPES.FETCH_SERVICE_CONTAINERS,
-      payload: api.getPublicContainerKeys()
+      payload: api.getServiceFolderNames()
         .then(containers => dispatch(setServiceContainers(containers))),
     });
   }
