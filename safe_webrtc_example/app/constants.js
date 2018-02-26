@@ -1,5 +1,27 @@
 export default {
   UI: {
+    LABELS: {
+      title: 'SAFE WebRTC Signalling',
+      activePubName: 'Active public name',
+      newVideoCall: 'New Video Call',
+      invites: 'Invites',
+    },
+    BOOTSTRAP_MSG: {
+      authorise: 'Authorising with Authenticator',
+      authoriseFail: 'Failed to authorising with Authenticator',
+      initialise: 'Initialising application',
+      initialiseFail: 'Failed to initialise application',
+      noPubNameFound: 'No public name found. Please register and try access this application.',
+      fetchPublicName: 'Fetching Public Names',
+      fetchPublicNameFail: 'Unable to fetching Public Names',
+      fetchInvites: 'Fetching Invites',
+      fetchInvitesFail: 'Unable to fetching Invites',
+      activatePublicName: 'Activating public name',
+      activatePublicNameFail: 'Failed to activate public name',
+      connecting: 'Connecting with friend',
+      connectingFail: 'Failed to connect with friend',
+      invalidPublicName: 'Invalid Public Name',
+    },
     DEFAULT_LOADING_DESC: 'Please wait...',
     CONN_MSGS: {
       INIT: 'Initialising connection',
