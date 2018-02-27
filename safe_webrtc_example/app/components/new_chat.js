@@ -83,7 +83,6 @@ export default class NewChat extends Component {
     const { history } = this.props;
     this.props.store.resetNewChatState();
     const friendID = this.friendID.value.trim();
-    console.log('friendID', friendID)
     this.props.store.connect(friendID)
       .then(() => {
         history.push('chat-room');

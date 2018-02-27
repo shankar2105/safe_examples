@@ -382,6 +382,10 @@ export default class AppStore {
   connect(friendID) {
     return new Promise(async (resolve, reject) => {
       try {
+        if (this.publicNames.includes(friendID)) {
+          this.newChatError = CONST.UI.BOOTSTRAP_MSG.cantInviteYourself;
+          return reject();
+        }
         this.newChatProgress = CONST.UI.BOOTSTRAP_MSG.connecting;
         await this.api.connect(friendID);
         this.friendID = friendID;

@@ -21,6 +21,7 @@ export default {
       connecting: 'Connecting with friend',
       connectingFail: 'Failed to connect with friend',
       invalidPublicName: 'Invalid Public Name',
+      cantInviteYourself: 'Can\'t invite yourself' ,
     },
     DEFAULT_LOADING_DESC: 'Please wait...',
     CONN_MSGS: {
