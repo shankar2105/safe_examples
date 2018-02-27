@@ -112,7 +112,7 @@ export default class NewChat extends Component {
                   required="required"
                   ref={c => { this.friendID = c }}
                   onFocus={this.onFocusInput}
-                  placeholder="Enter Friend's public name" />
+                  placeholder="Enter friend's public name" />
               </div>
               {!store.newChatProgress ? this.getOptions() : null}
             </form>
