@@ -127,7 +127,7 @@ export default class Invites extends Component {
     }
     return (
       <div>
-        <h3>Select Public Name</h3>
+        <h3>Choose an invite</h3>
         {container}
         {this.getOptions()}
       </div>

@@ -19,6 +19,8 @@
     line-height: 70px
     padding: 0 48px
     font-weight: normal
+    &:hover
+      background-color: $color-green-dark
   &.primary
     color: $color-pr-blue
     &:hover
@@ -32,9 +34,11 @@
   &.end-call
     width: 50px
     height: 50px
-    background-color: $color-error
+    background-color: $color-end-call
     background-image: url($end-call-url)
     background-position: center
     background-size: 24px
     background-repeat: no-repeat
     border-radius: 50%
+    &:hover
+      background-color: $color-end-call-hover

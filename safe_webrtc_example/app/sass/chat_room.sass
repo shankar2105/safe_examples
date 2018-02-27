@@ -8,13 +8,15 @@
     height: $remote-width
     background: $color-smoke-medium
     position: relative
-    top: 160px
+    top: 130px
     left: 50%
     transform: translate(-50%, 0)
     border-radius: 5px
+    overflow: hidden
     video
       width: 100%
       height: 100%
+      transform: scale(1.3)
     .origin
       width: $origin-width
       height: $origin-width
@@ -23,9 +25,11 @@
       top: 0
       right: 0
       border-radius: 5px
+      overflow: hidden
       video
         width: 100%
         height: 100%
+        transform: scale(1.3)
     .opts
       width: 100%
       position: absolute
@@ -47,6 +51,8 @@
       min-height: 220px
     .call-for
       text-align: center
+      width: 100%
+      position: relative
       .call-for-b
         display: inline-block
       .caller,
@@ -54,10 +60,15 @@
         font-size: 18px
         color: $color-smoke-medium
         line-height: 50px
+        width: 50%
       .caller
         float: left
+        padding-right: 50px
+        text-align: right
       .callee
         float: left
+        padding-left: 50px
+        text-align: left
       .split
         float: left
         width: 100px
@@ -67,6 +78,9 @@
         background-position: center
         background-size: contain
         background-repeat: no-repeat
+        position: absolute
+        left: 50%
+        transform: translate(-50%, 0)
     &.connected
       .status-b
         height: auto
@@ -75,6 +89,21 @@
         top: 16px
         transform: translate(-50%, 0)
         min-height: 80px
+        padding: 16px
+        .logo
+          width: $logo-xs
+          height: $logo-xs
+          top: 16px
+          left: 16px
+          &.logo-sm
+            .logo-img
+              height: 30px
+      .call-for
+        .caller,
+        .callee
+          line-height: 30px
+        .split
+          margin: 0
       .opts
         display: none !important
     .id
@@ -82,6 +111,8 @@
       color: $color-smoke-light
       font-weight: 600
       width: 100%
+      margin-top: 8px
+      line-height: 24px
     .opts
       display: inline-block
       .opt
