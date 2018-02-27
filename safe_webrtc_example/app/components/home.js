@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { inject, observer } from "mobx-react";
 
 import CONST from '../constants';
+import ActivePublicName from './active_public_name';
 
 @inject("store")
 @observer
@@ -14,7 +15,7 @@ export default class Home extends Component {
 
   componentWillMount() {
     if (!this.props.store.isAuthorised) {
-      return this.props.history.go(-1);
+      return this.props.history.push('/');
     }
   }
 
@@ -46,19 +47,7 @@ export default class Home extends Component {
       return <span></span>
     }
 
-    return (
-      <div className="active-public-name">
-        <div className="active-public-name-b">
-          <div className="label">{CONST.UI.LABELS.activePubName}</div>
-          <div className="value">{store.activePublicName.toUpperCase()}</div>
-          <div className="opt">
-            <button className="btn" onClick={() => {
-              history.push('switch-public-name');
-            }}>SWITCH</button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ActivePublicName history={history} publicName={store.activePublicName} />
   }
 
   render() {

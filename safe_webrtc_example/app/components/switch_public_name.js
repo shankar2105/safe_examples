@@ -4,6 +4,7 @@ import { inject, observer } from "mobx-react";
 import classNames from 'classnames';
 
 import CONST from '../constants';
+import ActivePublicName from './active_public_name';
 
 @inject("store")
 @observer
@@ -15,6 +16,9 @@ export default class SwitchPublicName extends Component {
     };
   }
   componentWillMount() {
+    if (!this.props.store.isAuthorised) {
+      return this.props.history.push('/');
+    }
     this.props.store.fetchPublicNames();
   }
 
@@ -30,7 +34,7 @@ export default class SwitchPublicName extends Component {
   }
 
   getOptions(onlyCancel) {
-    const { store } = this.props;
+    const { store, history } = this.props;
 
     return (
       <div className="opts">
@@ -40,7 +44,7 @@ export default class SwitchPublicName extends Component {
               <button className="btn primary" disabled={!this.state.selectedPubName} onClick={() => {
                 store.activatePublicName(this.state.selectedPubName)
                   .then(() => {
-                    history.go(-1);
+                    history.push('/home');
                   });
               }}>Activate</button>
             </div>
@@ -48,7 +52,7 @@ export default class SwitchPublicName extends Component {
         }
         <div className="opt">
           <button className="btn" onClick={() => {
-            history.go(-1);
+            history.push('/home');
           }}>Cancel</button>
         </div>
       </div>
@@ -130,7 +134,7 @@ export default class SwitchPublicName extends Component {
       <div>
         <h3>Select Public Name</h3>
         {container}
-        {this.getOptions(!!store.switchIDProgress)}
+        {!store.switchIDProgress ? this.getOptions() : null}
       </div>
     );
   }
@@ -141,14 +145,7 @@ export default class SwitchPublicName extends Component {
       return <span></span>
     }
 
-    return (
-      <div className="active-public-name">
-        <div className="active-public-name-b">
-          <div className="label">{CONST.UI.LABELS.activePubName}</div>
-          <div className="value">{store.activePublicName.toUpperCase()}</div>
-        </div>
-      </div>
-    );
+    return <ActivePublicName history={history} publicName={store.activePublicName} disableOptions />
   }
 
   render() {

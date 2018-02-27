@@ -27,6 +27,9 @@ export default class ChatRoom extends Component {
   }
 
   componentWillMount() {
+    if (!this.props.store.isAuthorised) {
+      return this.props.history.push('/');
+    }
     this.friendID = this.props.match.params.friendId;
     this.friendUID = this.props.match.params.uid;
     this.props.store.initialiseConnInfo(this.friendID, this.friendUID)
@@ -188,16 +191,15 @@ export default class ChatRoom extends Component {
     this.originConn = null;
     this.destConn = null;
     this.reset();
-    this.props.history.push('/');
+    this.props.history.push('/home');
   }
 
   onClickCancel(e) {
     e.preventDefault();
     const self = this;
     const moveHome = () => {
-      console.log('moveHome');
       self.reset();
-      self.props.history.push('/');
+      self.props.history.push('/home');
     };
     this.props.store.deleteInvite()
       .then(moveHome, moveHome);
@@ -258,8 +260,6 @@ export default class ChatRoom extends Component {
     const statusClassName = classNames('status', {
       'connected': connectionState === CONN_STATE.CONNECTED
     });
-
-    console.log('this.friendID, this.friendUID', this.friendID, this.friendUID)
 
     return (
       <div className={statusClassName}>

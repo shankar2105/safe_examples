@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { inject, observer } from "mobx-react";
 import CONST from '../constants';
+import ActivePublicName from './active_public_name';
 @inject("store")
 @observer
 export default class NewChat extends Component {
@@ -9,6 +10,12 @@ export default class NewChat extends Component {
     super();
     this.onSubmitFriendID = this.onSubmitFriendID.bind(this);
     this.onFocusInput = this.onFocusInput.bind(this);
+  }
+
+  componentWillMount() {
+    if (!this.props.store.isAuthorised) {
+      return this.props.history.push('/');
+    }
   }
 
   componentDidMount() {
@@ -20,19 +27,12 @@ export default class NewChat extends Component {
   }
 
   getActivePublicContainer() {
-    const { store, history } = this.props;
+    const { store } = this.props;
     if (!store.activePublicName) {
       return <span></span>
     }
 
-    return (
-      <div className="active-public-name">
-        <div className="active-public-name-b">
-          <div className="label">{CONST.UI.LABELS.activePubName}</div>
-          <div className="value">{store.activePublicName.toUpperCase()}</div>
-        </div>
-      </div>
-    );
+    return <ActivePublicName history={history} publicName={store.activePublicName} disableOptions />
   }
 
   getOptions(onlyCancel) {
@@ -44,7 +44,7 @@ export default class NewChat extends Component {
         </div>) : null}
         <div className="opt">
           <button type="button" className="btn" onClick={() => {
-            history.go(-1);
+            history.push('/home');
           }}>Cancel</button>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default class NewChat extends Component {
                   onFocus={this.onFocusInput}
                   placeholder="Enter Friend's public name" />
               </div>
-              {this.getOptions(!!store.newChatProgress)}
+              {!store.newChatProgress ? this.getOptions() : null}
             </form>
             {this.getProgress()}
           </div>

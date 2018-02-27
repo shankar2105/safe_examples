@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { inject, observer } from "mobx-react";
 import classNames from 'classnames';
 import CONST from '../constants';
+import ActivePublicName from './active_public_name';
+
 @inject("store")
 @observer
 export default class Invites extends Component {
@@ -17,6 +19,9 @@ export default class Invites extends Component {
   }
 
   componentWillMount() {
+    if (!this.props.store.isAuthorised) {
+      return this.props.history.push('/');
+    }
     this.props.store.fetchInvites();
   }
 
@@ -31,20 +36,25 @@ export default class Invites extends Component {
   }
 
   getOptions(onlyCancel) {
+    const { store, history } = this.props;
     return (
       <div className="opts">
         {
           !onlyCancel ? (
             <div className="opt">
-              <button className="btn primary" disabled={!this.state.selectedInvite} onClick={() => {
-                this.props.history.push(`chat-room/${this.state.selectedInvite.publicId}/${this.state.selectedInvite.uid}`);
-              }}>Connect</button>
+              <button
+                className="btn primary"
+                disabled={!this.state.selectedInvite.publicId || !this.state.selectedInvite.uid || (store.invites.length === 0)}
+                onClick={() => {
+                  history.push(`chat-room/${this.state.selectedInvite.publicId}/${this.state.selectedInvite.uid}`);
+                }}>Connect
+              </button>
             </div>
           ) : null
         }
         <div className="opt">
           <button className="btn" onClick={() => {
-            history.go(-1);
+            history.push('/home');
           }}>Cancel</button>
         </div>
       </div>
@@ -95,7 +105,6 @@ export default class Invites extends Component {
   getInvitesList() {
     const { store, history } = this.props;
     let container = undefined;
-    console.log('store.invites', store.invites)
     if (store.invites.length === 0) {
       container = <div className="default">No invites available</div>
     } else {
@@ -103,7 +112,6 @@ export default class Invites extends Component {
         <ul>
           {
             store.invites.map((invite, i) => {
-              console.log('store.invites invite', invite)
               const listClassName = classNames({
                 active: (invite.uid === this.state.selectedInvite.uid) && (invite.publicId === this.state.selectedInvite.publicId)
               });
@@ -132,14 +140,7 @@ export default class Invites extends Component {
       return <span></span>
     }
 
-    return (
-      <div className="active-public-name">
-        <div className="active-public-name-b">
-          <div className="label">{CONST.UI.LABELS.activePubName}</div>
-          <div className="value">{store.activePublicName.toUpperCase()}</div>
-        </div>
-      </div>
-    );
+    return <ActivePublicName history={history} publicName={store.activePublicName} disableOptions />
   }
 
   render() {
