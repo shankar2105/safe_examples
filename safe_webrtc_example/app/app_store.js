@@ -198,6 +198,7 @@ export default class AppStore {
         const connStr = await this.api.fetchConnInfo(connInfo);
         const parsedConnInfo = this.parseConnStr(connStr);
         if (parsedConnInfo.state === CONST.CONN_STATE.INVITE_ACCEPTED) {
+          this.setConnState(CONST.CONN_STATE.INVITE_ACCEPTED);
           this.setRemoteOffer(parsedConnInfo.callee.offer);
           this.setRemoteOfferCandidates(parsedConnInfo.callee.offerCandidates);
           this.setRemoteAnswer(parsedConnInfo.callee.answer);
@@ -220,7 +221,7 @@ export default class AppStore {
         const connStr = await this.api.fetchConnInfo(connInfo);
         const parsedConnInfo = this.parseConnStr(connStr);
         if (parsedConnInfo.state === CONST.CONN_STATE.CONNECTED) {
-          this.connectionState = CONST.CONN_STATE.CONNECTED;
+          this.setConnState(CONST.CONN_STATE.CONNECTED);
           return resolve(true);
         }
         resolve(false);

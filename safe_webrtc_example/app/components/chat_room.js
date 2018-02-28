@@ -59,7 +59,8 @@ export default class ChatRoom extends Component {
           this.setTimer(fn);
           return;
         }
-        if (store.persona === CONST.USER_POSITION.CALLER && store.remoteOffer) {
+        if (store.persona === CONST.USER_POSITION.CALLER && store.remoteOffer && store.state === CONST.CONN_STATE.INVITE_ACCEPTED) {
+          console.log('call store.remoteAnswer', store.remoteAnswer)
           this.call();
         }
 
@@ -147,15 +148,23 @@ export default class ChatRoom extends Component {
             }, (err) => {
               console.error('set ICE candidate failed ::', err);
             });
-        }));
+        })).then(() => {
+          console.log('finisj connection')
+        });
       }, (err) => {
         console.error('set destination remote session failed ::', err);
-      }).then(() => {
-        this.destConn.createAnswer().then((ansDesc) => {
-          this.onCreateAnswerSuccess(ansDesc);
-        }, (err) => {
-          console.error('create answer error :: ', err);
-        });
+      })
+      .then(() => this.destConn.createAnswer())
+      .then((ansDesc) => {
+        console.log('create answer success');
+        this.onCreateAnswerSuccess(ansDesc);
+      }, (err) => {
+        console.error('create answer error :: ', err);
+      })
+      .then(() => {
+        if (store.persona === CONST.USER_POSITION.CALLER && store.remoteAnswer) {
+          this.finishConnection();
+        }
       });
   }
 
@@ -170,9 +179,10 @@ export default class ChatRoom extends Component {
   }
 
   onCreateAnswerSuccess(answer) {
+    const { store } = this.props;
     this.destConn.setLocalDescription(answer)
       .then(() => {
-        return this.props.store.setAnswer(answer);
+        return store.setAnswer(answer);
         console.log('set destination local session success');
       }, (err) => {
         console.error('set destination local session failed ::', err);
@@ -235,10 +245,9 @@ export default class ChatRoom extends Component {
     const { CONN_STATE, UI } = CONST;
     const { CONN_MSGS } = UI;
 
-    // FIXME check for not caller persona
-    if (connectionState === CONN_STATE.CONNECTED) {
-      this.finishConnection();
-    } else {
+    const isConnected = (connectionState === CONN_STATE.CONNECTED);
+
+    if (!isConnected) {
       switch (connectionState) {
         case CONN_STATE.INIT:
           connectionMsg = CONN_MSGS.INIT;
@@ -290,16 +299,21 @@ export default class ChatRoom extends Component {
 
   finishConnection() {
     const { store } = this.props;
+    console.log('store.remoteAnswerCandidates', store.remoteAnswerCandidates);
+    console.log('store.remoteAnswer', store.remoteAnswer);
     this.originConn.setRemoteDescription(store.remoteAnswer)
       .then(() => {
         Promise.all(store.remoteAnswerCandidates.map((can) => {
           return this.originConn.addIceCandidate(new RTCIceCandidate(can))
             .then(() => {
-              console.log('set ICE candidate success');
+              console.log('set ICE candidate origin success');
             }, (err) => {
-              console.error('set ICE candidate failed ::', err);
+              console.error('set ICE candidate origin failed ::', err);
             });
         })).then(() => {
+          if (store.persona === CONST.USER_POSITION.CALLER) {
+            return;
+          }
           store.connected();
         });
       }, (err) => {

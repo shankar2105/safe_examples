@@ -468,13 +468,16 @@ export default class SafeApi {
         if (isCaller) {
           utils.putLog('Insert data', dataKey);
           await window.safeMutableDataMutation.insert(mutationHandle, dataKey, connInfoStr);
+          utils.putLog('Inserted data', dataKey);
         } else {
           utils.putLog('Update data', dataKey);
           const connStr = await window.safeMutableData.get(channelMD, dataKey);
           await window.safeMutableDataMutation.update(mutationHandle, dataKey, connInfoStr, connStr.version + 1);
+          utils.putLog('Updated data', dataKey);
         }
 
         await window.safeMutableData.applyEntriesMutation(channelMD, mutationHandle);
+        utils.putLog('put confirmed', dataKey);
         window.safeMutableDataMutation.free(mutationHandle);
         window.safeMutableDataEntries.free(entriesHandle);
         resolve(true);
