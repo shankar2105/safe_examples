@@ -39,9 +39,9 @@ export default {
   CONFIG: {
     SERVER: {
       iceServers: [
-        { url: 'stun:stun1.l.google.com:19302' }, // URL to STUN Server
+        { url: 'STUN_SERVER_URL' }, // fill STUN Server url
         {
-          url: 'turn:numb.viagenie.ca',
+          url: 'TURN_SERVER_URL', // fill turn server url
           credential: 'PASSWORD', // fill turn server password
           username: 'USERNAME' // fill turn server username
         },
@@ -84,9 +84,6 @@ export default {
   TYPE_TAG: {
     CHANNEL: 15005,
     DNS: 15001,
-  },
-  ERR_CODE: {
-    NO_SUCH_ENTRY: -106,
   },
   CRYPTO_KEYS: {
     SEC_SIGN_KEY: '__SEC_SIGN_KEY__',

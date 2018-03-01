@@ -79,6 +79,15 @@ export default class ChatRoom extends Component {
       });
   }
 
+  stopAllStreams() {
+    if (!this.originStream) {
+      return;
+    }
+    this.originStream.getTracks().forEach((track) => {
+      track.stop();
+    });
+  }
+
   setupOrigin() {
     return new Promise((resolve) => {
       this.originConn = new window.RTCPeerConnection(CONST.CONFIG.SERVER);
@@ -192,6 +201,7 @@ export default class ChatRoom extends Component {
   reset() {
     clearTimeout(this.timer);
     this.props.store.resetConnInfo();
+    this.stopAllStreams();
   }
 
   endCall(e) {
